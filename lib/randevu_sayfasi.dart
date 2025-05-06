@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:gluco_reminder/profil.dart';
 import 'package:gluco_reminder/randevu_ekleme.dart';
@@ -17,9 +18,10 @@ class MyApp extends StatelessWidget {
   }
 }
 
-enum RandevuFiltre { tumu, gecmis, yaklasan }
+enum RandevuFiltre { gecmis, yaklasan }
 
 class Randevu {
+  final String id; // Firestore doküman ID'si
   final String doktorAdi;
   final String hastaneAdi;
   final String randevuTuru;
@@ -28,6 +30,7 @@ class Randevu {
   final String notlar;
 
   Randevu({
+    required this.id,
     required this.doktorAdi,
     required this.hastaneAdi,
     required this.randevuTuru,
@@ -44,46 +47,47 @@ class RandevuSayfasi extends StatefulWidget {
 
 class _RandevuSayfasiState extends State<RandevuSayfasi> {
   final Color randevuRenk = Color.fromARGB(255, 79, 210, 210);
-  List<Randevu> randevular = [];
-  RandevuFiltre seciliFiltre = RandevuFiltre.tumu;
-  List<Randevu> getFiltrelenmisRandevular() {
+  RandevuFiltre seciliFiltre = RandevuFiltre.yaklasan;
+
+  // Firestore'dan randevuları filtreye göre çek
+  Stream<List<Randevu>> randevulariGetir(RandevuFiltre filtre) {
+    Query query = FirebaseFirestore.instance.collection('randevular');
+
     DateTime simdi = DateTime.now();
-    DateFormat format = DateFormat("dd.MM.yyyy"); // Türkçe format
+    Timestamp simdiTimestamp = Timestamp.fromDate(simdi);
 
-    return randevular.where((randevu) {
-      try {
-        DateTime randevuTarihi = format.parse(randevu.tarih);
-        switch (seciliFiltre) {
-          case RandevuFiltre.gecmis:
-            return randevuTarihi.isBefore(simdi);
-          case RandevuFiltre.yaklasan:
-            return randevuTarihi.isAfter(simdi);
-          case RandevuFiltre.tumu:
-          default:
-            return true;
-        }
-      } catch (e) {
-        return true;
-      }
-    }).toList();
+    if (filtre == RandevuFiltre.yaklasan) {
+      query = query.where('tarih', isGreaterThanOrEqualTo: simdiTimestamp);
+    } else if (filtre == RandevuFiltre.gecmis) {
+      query = query.where('tarih', isLessThan: simdiTimestamp);
+    }
+
+    query = query.orderBy('tarih', descending: filtre == RandevuFiltre.gecmis);
+
+    return query.snapshots().map((snapshot) => snapshot.docs
+        .map((doc) => Randevu(
+              id: doc.id,
+              doktorAdi: doc['doktorAdi'],
+              hastaneAdi: doc['hastaneAdi'],
+              randevuTuru: doc['randevuTuru'],
+              tarih: DateFormat('dd/MM/yyyy')
+                  .format((doc['tarih'] as Timestamp).toDate()),
+              saat: doc['saat'],
+              notlar: doc['notlar'],
+            ))
+        .toList());
   }
 
-  void randevuEkle(Randevu yeniRandevu) {
-    setState(() {
-      randevular.add(yeniRandevu);
-    });
-  }
-
-  void randevuSil(int index) {
-    setState(() {
-      randevular.removeAt(index); // Belirtilen index'teki randevuyu kaldır
-    });
+  // Randevu silme
+  void randevuSil(String docId) async {
+    await FirebaseFirestore.instance
+        .collection('randevular')
+        .doc(docId)
+        .delete();
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtrelenmisRandevular = getFiltrelenmisRandevular();
-
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -115,22 +119,6 @@ class _RandevuSayfasiState extends State<RandevuSayfasi> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    seciliFiltre = RandevuFiltre.tumu;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: seciliFiltre == RandevuFiltre.tumu
-                      ? Colors.teal
-                      : Color.fromARGB(255, 79, 210, 210),
-                ),
-                child: Text(
-                  "Tümü",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
               ElevatedButton(
                 onPressed: () {
                   setState(() {
@@ -167,74 +155,78 @@ class _RandevuSayfasiState extends State<RandevuSayfasi> {
           ),
           SizedBox(height: 10),
           Expanded(
-            child: filtrelenmisRandevular.isEmpty
-                ? Center(child: Text("Gösterilecek randevu yok."))
-                : ListView.builder(
-                    itemCount: filtrelenmisRandevular.length,
-                    itemBuilder: (context, index) {
-                      final randevu = filtrelenmisRandevular[index];
-                      return Container(
-                        margin: EdgeInsets.all(8),
-                        padding: EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: randevuRenk,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("Randevu Türü: ${randevu.randevuTuru}",
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 16)),
-                                Text("Tarih: ${randevu.tarih}",
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 16)),
-                                Text("Saat: ${randevu.saat}",
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 16)),
-                              ],
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.arrow_forward_ios,
-                                  color: Colors.white),
-                              onPressed: () {
-                                final orijinalIndex =
-                                    randevular.indexOf(randevu);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => RandevuDetaySayfasi(
-                                      randevu: randevu,
-                                      onSil: () {
-                                        randevuSil(orijinalIndex);
-                                        Navigator.pop(context);
-                                      },
-                                    ),
+            child: StreamBuilder<List<Randevu>>(
+              stream: randevulariGetir(seciliFiltre),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text("Randevu bulunamadı"));
+                }
+                return ListView.builder(
+                  itemCount: snapshot.data!.length,
+                  itemBuilder: (context, index) {
+                    final randevu = snapshot.data![index];
+                    return Container(
+                      margin: EdgeInsets.all(8),
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: randevuRenk,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Randevu Türü: ${randevu.randevuTuru}',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 16)),
+                              Text('Tarih: ${randevu.tarih}',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 16)),
+                              Text('Saat: ${randevu.saat}',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 16)),
+                            ],
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.arrow_forward_ios,
+                                color: Colors.white),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => RandevuDetaySayfasi(
+                                    randevu: randevu,
+                                    onSil: () {
+                                      randevuSil(randevu.id);
+                                      Navigator.pop(
+                                          context); // Detay sayfasından çık
+                                    },
                                   ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                                ),
+                              );
+                            },
+                          )
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
+        onPressed: () {
+          Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => RandevuEkleme()),
           );
-
-          if (result != null) {
-            randevuEkle(result);
-          }
         },
         backgroundColor: Color.fromARGB(255, 79, 210, 210),
         child: Icon(Icons.add, color: Colors.white),
@@ -259,37 +251,74 @@ class RandevuDetaySayfasi extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Doktor: ${randevu.doktorAdi}",
-                style: TextStyle(fontSize: 18)),
-            SizedBox(height: 20),
-            Text("Hastane: ${randevu.hastaneAdi}",
-                style: TextStyle(fontSize: 18)),
-            SizedBox(height: 20),
-            Text("Randevu Türü: ${randevu.randevuTuru}",
-                style: TextStyle(fontSize: 18)),
-            SizedBox(height: 20),
-            Text("Tarih: ${randevu.tarih}", style: TextStyle(fontSize: 18)),
-            SizedBox(height: 20),
-            Text("Saat: ${randevu.saat}", style: TextStyle(fontSize: 18)),
-            SizedBox(height: 20),
-            Text("Notlar: ${randevu.notlar}", style: TextStyle(fontSize: 18)),
-            Spacer(),
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: onSil,
-                icon: Icon(Icons.delete),
-                label: Text(
-                  "Randevuyu Sil",
-                  style: TextStyle(color: Colors.white),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+            Container(
+              width: 500,
+              height: 500,
+              decoration: BoxDecoration(
+                color: Colors.orange[100],
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(
+                    20.0), // metinleri kenarlardan içeri alır
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, // sola hizalama
+                  children: [
+                    Text('Doktor Adı: ${randevu.doktorAdi}',
+                        style: TextStyle(color: Colors.black, fontSize: 20)),
+                    SizedBox(height: 15),
+                    Text('Hastane Adı: ${randevu.hastaneAdi}',
+                        style: TextStyle(color: Colors.black, fontSize: 20)),
+                    SizedBox(height: 15),
+                    Text('Randevu Türü: ${randevu.randevuTuru}',
+                        style: TextStyle(color: Colors.black, fontSize: 20)),
+                    SizedBox(height: 15),
+                    Text('Tarih: ${randevu.tarih}',
+                        style: TextStyle(color: Colors.black, fontSize: 20)),
+                    SizedBox(height: 15),
+                    Text('Saat: ${randevu.saat}',
+                        style: TextStyle(color: Colors.black, fontSize: 20)),
+                    SizedBox(height: 15),
+                    Text('Notlar: ${randevu.notlar}',
+                        style: TextStyle(color: Colors.black, fontSize: 20)),
+                  ],
                 ),
               ),
-            )
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    onSil(); // Randevuyu silmek için callback'i çağır
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color.fromARGB(255, 182, 60, 90),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.white),
+                      SizedBox(width: 5),
+                      Text(
+                        "Randevuyu Sil",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Text row() {
+    return Text(
+      "Düzenle",
+      style: TextStyle(color: Colors.white),
     );
   }
 }
