@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:gluco_reminder/randevu_sayfasi.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   runApp(MyApp());
@@ -63,17 +64,32 @@ class _RandevuEklemeState extends State<RandevuEkleme> {
     }
   }
 
-  void _kaydet() {
-    Randevu yeniRandevu = Randevu(
-      doktorAdi: _doktorAdiController.text,
-      hastaneAdi: _hastaneAdiController.text,
-      randevuTuru: _randevuTuruController.text,
-      tarih: _dateController.text,
-      saat: _timeController.text,
-      notlar: _notlarController.text,
-    );
+  void _kaydet() async {
+    // Eğer herhangi bir alan boşsa uyarı göster ve işlemi durdur
+    if (_doktorAdiController.text.isEmpty ||
+        _hastaneAdiController.text.isEmpty ||
+        _randevuTuruController.text.isEmpty ||
+        _dateController.text.isEmpty ||
+        _timeController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Lütfen tüm alanları doldurun!")),
+      );
+      return;
+    }
+    // String tarihi DateTime'a çevir (Firestore'da saklamak için)
+    DateFormat format = DateFormat("dd/MM/yyyy");
+    DateTime tarihDateTime = format.parse(_dateController.text);
 
-    Navigator.pop(context, yeniRandevu); // Randevu bilgilerini geri döndür
+    await FirebaseFirestore.instance.collection('randevular').add({
+      'doktorAdi': _doktorAdiController.text,
+      'hastaneAdi': _hastaneAdiController.text,
+      'randevuTuru': _randevuTuruController.text,
+      'tarih': Timestamp.fromDate(tarihDateTime),
+      'saat': _timeController.text,
+      'notlar': _notlarController.text,
+      'eklenmeZamani': FieldValue.serverTimestamp(),
+    });
+    Navigator.pop(context);
   }
 
   @override
