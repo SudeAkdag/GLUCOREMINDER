@@ -89,46 +89,7 @@ void _getLatestBpm() async {
     return egzersizVerileri.fold(
         0, (toplam, egzersiz) => toplam + (egzersiz['time'] as num).toInt());
   }
-
-  void _egzersizHesapla(String egzersizAdi) {
-    int time = 0; // Dakika cinsinden süre
-    double calories = 0.0; // Kalori
-    int kilo = 50;
-    // ignore: non_constant_identifier_names
-    int metDegeri = 0; // Başlangıç değeri atanmalı
-
-    switch (egzersizAdi) {
-      case 'Koşu':
-        metDegeri = 3;
-        time = 30;
-        break;
-      case 'Yüzme':
-        metDegeri = 4;
-        time = 30;
-        break;
-      case 'Yürüyüş':
-        metDegeri = 3;
-        time = 30;
-        break;
-      case 'Bisiklet':
-        metDegeri = 5;
-        time = 30;
-        break;
-      default:
-        return; // Geçersiz seçim
-    }
-    // Kalori hesaplaması
-    calories = (metDegeri * kilo * 3.5 / 200) * time;
-
-    setState(() {
-      egzersizVerileri.add({
-        'name': egzersizAdi,
-        'time': time,
-        'calories': calories.toDouble() // double olarak kaydediyoruz
-      });
-    });
-  }
-
+  
   void _egzersizSec(String egzersizAdi) {
     Widget yeniSayfa;
 
@@ -215,10 +176,6 @@ void _getLatestBpm() async {
                   children: [
                     InkWell(
                       onTap: () {
-                        setState(() {
-                          _egzersizHesapla(
-                              egzersiz['name']); // Kalori ve süre hesapla
-                        });
                         _egzersizSec(egzersiz['name']); // Sayfaya yönlendir
                       },
                       borderRadius: BorderRadius.circular(25),
