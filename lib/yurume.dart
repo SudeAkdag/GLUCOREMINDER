@@ -285,7 +285,7 @@ final adjustedMaxY = ((maxYValue + interval) / interval).ceil() * interval;
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => Profil()),
+                    MaterialPageRoute(builder: (context) => ProfilSayfasi()),
                   );
                 },
                   child:CircleAvatar(

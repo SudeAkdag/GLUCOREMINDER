@@ -102,7 +102,7 @@ class _AcilDurumSayfasiState extends State<AcilDurumSayfasi> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => Profil()), //profil sayfasına geçiş
+                  builder: (context) => ProfilSayfasi()), //profil sayfasına geçiş
             );
           },
         ),

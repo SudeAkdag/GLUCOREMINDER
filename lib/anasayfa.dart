@@ -28,7 +28,7 @@ class Anasayfa extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Profil()),
+              MaterialPageRoute(builder: (context) => ProfilSayfasi()),
             );
           },
         ),

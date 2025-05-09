@@ -22,7 +22,7 @@ class _IlacSayfasiState extends State<IlacSayfasi> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => Profil()), //profil sayfasına geçiş
+                  builder: (context) => ProfilSayfasi()), //profil sayfasına geçiş
             );
           },
         ),

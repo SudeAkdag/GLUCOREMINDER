@@ -98,7 +98,7 @@ class _RandevuSayfasiState extends State<RandevuSayfasi> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Profil()),
+              MaterialPageRoute(builder: (context) => ProfilSayfasi()),
             );
           },
         ),
