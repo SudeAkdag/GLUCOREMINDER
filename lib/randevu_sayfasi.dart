@@ -314,11 +314,4 @@ class RandevuDetaySayfasi extends StatelessWidget {
       ),
     );
   }
-
-  Text row() {
-    return Text(
-      "Düzenle",
-      style: TextStyle(color: Colors.white),
-    );
-  }
 }
