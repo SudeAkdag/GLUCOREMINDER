@@ -47,7 +47,7 @@ class _AnasayfaState extends State<Anasayfa> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Profil()),
+              MaterialPageRoute(builder: (context) => ProfilSayfasi()),
             );
           },
         ),
