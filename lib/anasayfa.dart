@@ -74,7 +74,14 @@ class _AnasayfaState extends State<Anasayfa> {
                       height: 150,
                       width: 170,
                       decoration: BoxDecoration(
-                        color: Color.fromARGB(255, 79, 210, 210),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 5,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Center(
@@ -93,7 +100,7 @@ class _AnasayfaState extends State<Anasayfa> {
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor:
-                                      Color.fromARGB(255, 137, 234, 234),
+                                      Color.fromARGB(255, 200, 234, 137),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(5),
                                   ),
@@ -116,7 +123,7 @@ class _AnasayfaState extends State<Anasayfa> {
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor:
-                                      Color.fromARGB(255, 137, 234, 234),
+                                      Color.fromARGB(255, 211, 127, 79),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(5),
                                   ),
@@ -134,7 +141,14 @@ class _AnasayfaState extends State<Anasayfa> {
                       height: 150,
                       width: 170,
                       decoration: BoxDecoration(
-                        color: Color.fromARGB(255, 79, 210, 210),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 5,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
@@ -143,7 +157,14 @@ class _AnasayfaState extends State<Anasayfa> {
                       height: 150,
                       width: 170,
                       decoration: BoxDecoration(
-                        color: Color.fromARGB(255, 79, 210, 210),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 5,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
@@ -156,7 +177,14 @@ class _AnasayfaState extends State<Anasayfa> {
                       height: 150,
                       width: 170,
                       decoration: BoxDecoration(
-                        color: Color.fromARGB(255, 79, 210, 210),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 5,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
@@ -165,7 +193,14 @@ class _AnasayfaState extends State<Anasayfa> {
                       height: 150,
                       width: 170,
                       decoration: BoxDecoration(
-                        color: Color.fromARGB(255, 79, 210, 210),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 5,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
@@ -174,7 +209,14 @@ class _AnasayfaState extends State<Anasayfa> {
                       height: 150,
                       width: 170,
                       decoration: BoxDecoration(
-                        color: Color.fromARGB(255, 79, 210, 210),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 5,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
