@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:gluco_reminder/bottom_nav_bar.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:intl/date_symbol_data_local.dart'; // bunu ekle
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(); // Firebase'i başlatıyoruz
+  await initializeDateFormatting('tr_TR', null); // Türkçe yerelleştirmeyi yükle
+  await Firebase.initializeApp(); // Firebase'i başlat
   runApp(MyApp());
 }
 

@@ -20,7 +20,7 @@ class _BottomNavigationSayfaState extends State<BottomNavigationSayfa> {
     IlacSayfasi(),
     EgzersizSayfasi(),
     BeslenmeSayfasi(),
-    Anasayfa(),
+    HomeScreen(),
     RandevuSayfasi(),
     AcilDurumSayfasi(),
   ];
