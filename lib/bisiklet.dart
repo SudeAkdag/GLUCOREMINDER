@@ -27,6 +27,7 @@ class _BisikletSayfasiState extends State<BisikletSayfasi>
   bool _timerRunning = false;
   DateTime? _lastSavedTime;
   int _pausedSeconds = 0;
+ Timer? _chartUpdateTimer;
 
   List<String> last7DaysNames = []; // Firebase verisi ile gelen gün isimleri
 List<double> last7Calories = [];  // Firebase verisi ile gelen kalori değerleri
@@ -44,6 +45,9 @@ List<double> last7Calories = [];  // Firebase verisi ile gelen kalori değerleri
     _kontrolVeSifirla();
     _loadLastSession();
   _loadLast7Calories(); 
+   _chartUpdateTimer = Timer.periodic(Duration(seconds: 2), (timer) {
+    _loadLast7Calories();   // grafik verisi
+  });
   }
 Future<void> _kontrolVeSifirla() async {
   final bugun = DateTime.now();
@@ -248,6 +252,7 @@ void stopTimer() {
     if (_timerRunning) {
       _kaydetYuzmeVerisi(timerRunning: true);
     }
+     _chartUpdateTimer?.cancel(); // timer'ı durdur
     super.dispose();
   }
 
@@ -296,7 +301,7 @@ final adjustedMaxY = ((maxYValue + interval) / interval).ceil() * interval;
                   
                 ],
               ),
-              Text('Yürüme Sayfası', style: TextStyle(color: Colors.black)),
+              Text('Bisiklet Sayfası', style: TextStyle(color: Colors.black)),
             ],
           ),
         ),
@@ -319,7 +324,7 @@ final adjustedMaxY = ((maxYValue + interval) / interval).ceil() * interval;
                 child: Icon(
                   Icons.pedal_bike,
                   size: 60,
-                  color: Colors.purpleAccent,
+                  color: Colors.purple.shade900,
                 ),
               ),
             ),
@@ -396,6 +401,7 @@ final adjustedMaxY = ((maxYValue + interval) / interval).ceil() * interval;
   
   Card(
   elevation: 4,
+  color: Colors.purple.shade100,
   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
   child: Padding(
     padding: const EdgeInsets.all(12.0),
@@ -472,7 +478,7 @@ final adjustedMaxY = ((maxYValue + interval) / interval).ceil() * interval;
                       (index) => FlSpot(index.toDouble(), last7Calories[index]),
                     ),
                     barWidth: 3,
-                    color: Colors.orange,
+                    color: Colors.purple.shade900,
                     dotData: FlDotData(show: true),
                   ),
                 ],
@@ -508,7 +514,7 @@ class RingPainter extends CustomPainter {
       ..strokeWidth = strokeWidth;
 
     final foregroundPaint = Paint()
-      ..color = Colors.purpleAccent
+      ..color = Colors.purple.shade900
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;

@@ -51,7 +51,7 @@ void initState() {
   loadWaterLevel(); 
   _fetchTodayTotals();
 
-  // Opsiyonel: Verileri her 1 dakikada bir güncelle
+  // Opsiyonel: Verileri her 1 saniyede bir güncelle
   Timer.periodic(Duration(seconds: 1), (timer) {
     _fetchTodayTotals();
   });
