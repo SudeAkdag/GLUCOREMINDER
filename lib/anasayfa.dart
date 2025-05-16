@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:gluco_reminder/profil.dart';
 import 'package:intl/intl.dart';
@@ -210,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     SizedBox(
-                      height: 300,
+                      height: 400,
                       child: _buildBloodSugarChart(),
                     ),
                   ],
@@ -445,12 +446,14 @@ class _HomeScreenState extends State<HomeScreen> {
           final data = doc.data() as Map<String, dynamic>;
           final timestamp = (data['timestamp'] as Timestamp).toDate();
           final dateKey = DateFormat('dd/MM').format(timestamp);
+          final timeKey = DateFormat('HH:mm').format(timestamp);
 
           grouped.putIfAbsent(dateKey, () => []);
           grouped[dateKey]!.add({
             'value': data['value'],
             'type': data['type'],
             'timestamp': timestamp,
+            'timeKey': timeKey,
           });
         }
 
@@ -501,62 +504,78 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             SizedBox(
-              height: 250,
+              height: 350,
               child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: BarChart(
-                    BarChartData(
-                      backgroundColor: Colors.white,
-                      barGroups: barGroups,
-                      titlesData: FlTitlesData(
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 32,
-                            getTitlesWidget: (value, meta) {
-                              return Text(
-                                value.toStringAsFixed(
-                                    0), // veya '${value.toInt()}'
-                                style: const TextStyle(
-                                  color: Colors.black87,
-                                  fontSize: 10,
-                                ),
-                              );
-                            },
+                padding: const EdgeInsets.all(8.0),
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    SizedBox(
+                      width: max(barGroups.length * 70,
+                          MediaQuery.of(context).size.width),
+                      child: BarChart(
+                        BarChartData(
+                          backgroundColor: Colors.white,
+                          barGroups: barGroups,
+                          titlesData: FlTitlesData(
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 32,
+                                getTitlesWidget: (value, meta) {
+                                  return Text(
+                                    value.toStringAsFixed(0),
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontSize: 10,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            rightTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            topTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 50,
+                                getTitlesWidget: (value, meta) {
+                                  final date = dateLabels[value.toInt()];
+                                  final readings = grouped[date]!;
+                                  final times =
+                                      readings.map((r) => r['time']).join('\n');
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text(
+                                      dateLabels[value.toInt()],
+                                      style: TextStyle(fontSize: 10),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
-                        ),
-                        rightTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        topTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            getTitlesWidget: (value, meta) {
-                              return Text(
-                                dateLabels[value.toInt()],
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 10),
-                              );
-                            },
+                          gridData: FlGridData(
+                            show: true,
+                            drawHorizontalLine: true,
+                            horizontalInterval: 1000,
+                            getDrawingHorizontalLine: (value) => FlLine(
+                              color: Colors.white12,
+                              strokeWidth: 1,
+                            ),
                           ),
+                          borderData: FlBorderData(show: false),
+                          groupsSpace: 32,
                         ),
                       ),
-                      gridData: FlGridData(
-                        show: true,
-                        drawHorizontalLine: true,
-                        horizontalInterval: 1000,
-                        getDrawingHorizontalLine: (value) => FlLine(
-                          color: Colors.white12,
-                          strokeWidth: 1,
-                        ),
-                      ),
-                      borderData: FlBorderData(show: false),
-                      groupsSpace: 32,
                     ),
-                  )),
+                  ],
+                ),
+              ),
             ),
           ],
         );
