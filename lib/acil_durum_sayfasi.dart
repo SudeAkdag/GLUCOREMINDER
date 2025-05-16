@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:gluco_reminder/profil.dart';
 
 void main() {
@@ -13,11 +14,13 @@ class AcilDurumSayfasi extends StatefulWidget {
   const AcilDurumSayfasi({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _AcilDurumSayfasiState createState() => _AcilDurumSayfasiState();
 }
 
 class _AcilDurumSayfasiState extends State<AcilDurumSayfasi> {
+  final Color primaryColor = const Color(0xFF76C7C0);
+  final Color bgColor = const Color(0xFFF1FAFA);
+
   void kisiEkle() {
     String ad = '';
     String soyad = '';
@@ -28,28 +31,45 @@ class _AcilDurumSayfasiState extends State<AcilDurumSayfasi> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("Acil Durum Kişisi"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                decoration: InputDecoration(labelText: "Ad"),
-                onChanged: (value) => ad = value,
-              ),
-              TextField(
-                decoration: InputDecoration(labelText: "Soyad"),
-                onChanged: (value) => soyad = value,
-              ),
-              TextField(
-                decoration: InputDecoration(labelText: "Yakınlık Derecesi"),
-                onChanged: (value) => yakinlik = value,
-              ),
-              TextField(
-                decoration: InputDecoration(labelText: "Telefon Numarası"),
-                keyboardType: TextInputType.phone,
-                onChanged: (value) => telefon = value,
-              ),
-            ],
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text("Acil Durum Kişisi", style: TextStyle(color: primaryColor)),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  decoration: InputDecoration(
+                    labelText: "Ad",
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (value) => ad = value,
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  decoration: InputDecoration(
+                    labelText: "Soyad",
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (value) => soyad = value,
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  decoration: InputDecoration(
+                    labelText: "Yakınlık Derecesi",
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (value) => yakinlik = value,
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  decoration: InputDecoration(
+                    labelText: "Telefon Numarası",
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.phone,
+                  onChanged: (value) => telefon = value,
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -57,6 +77,7 @@ class _AcilDurumSayfasiState extends State<AcilDurumSayfasi> {
               onPressed: () => Navigator.pop(context),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
               child: Text("Ekle"),
               onPressed: () async {
                 if (ad.isNotEmpty &&
@@ -72,7 +93,6 @@ class _AcilDurumSayfasiState extends State<AcilDurumSayfasi> {
                     "telefon": telefon,
                   });
                 }
-                // ignore: use_build_context_synchronously
                 Navigator.pop(context);
               },
             ),
@@ -89,34 +109,107 @@ class _AcilDurumSayfasiState extends State<AcilDurumSayfasi> {
         .delete();
   }
 
+  void kisiSecenekleri(BuildContext context, Map<String, dynamic> kisi) {
+    showModalBottomSheet(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      context: context,
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Wrap(
+              spacing: 12,
+              children: [
+                ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.green[400],
+                    child: Icon(Icons.call, color: Colors.white),
+                  ),
+                  title: Text("Ara"),
+                  onTap: () async {
+                    final telUrl = Uri.parse("tel:${kisi['telefon']}");
+                    if (await canLaunchUrl(telUrl)) {
+                      await launchUrl(telUrl);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Arama başlatılamadı')),
+                      );
+                    }
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.blue[400],
+                    child: Icon(Icons.message, color: Colors.white),
+                  ),
+                  title: Text("Mesaj Gönder"),
+                  onTap: () async {
+                    final smsUrl = Uri.parse("sms:${kisi['telefon']}");
+                    if (await canLaunchUrl(smsUrl)) {
+                      await launchUrl(smsUrl);
+                    }
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const CircleAvatar(
-            backgroundColor: Color.fromARGB(255, 79, 210, 210),
-            child: Icon(Icons.person, color: Colors.white),
-          ),
-          onPressed: () {
+      backgroundColor: bgColor,
+      appBar: PreferredSize(
+  preferredSize: Size.fromHeight(80),
+  child: Container(
+    padding: EdgeInsets.only(top: 30, left: 16, right: 16, bottom: 12),
+    color: primaryColor, // Sadece renk veriyoruz, border yok
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        GestureDetector(
+          onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (context) => ProfilSayfasi()), //profil sayfasına geçiş
+              MaterialPageRoute(builder: (context) => ProfilSayfasi()),
             );
           },
-        ),
-        title: Text('Kullanıcı', style: TextStyle(fontSize: 16)),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(15.0),
-            child: Text(
-              'Acil Durum Sayfası',
-              style: TextStyle(fontSize: 20),
-            ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(Icons.person, color: Colors.teal),
+              ),
+              SizedBox(width: 8),
+              Text(
+                "Kullanıcı",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        Text(
+          "Acil Durum Sayfası",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+
       body: StreamBuilder(
         stream:
             FirebaseFirestore.instance.collection('acil_kisiler').snapshots(),
@@ -126,33 +219,60 @@ class _AcilDurumSayfasiState extends State<AcilDurumSayfasi> {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text("Kayıtlı acil durum kişisi yok."));
+            return Center(
+                child: Text(
+              "Kayıtlı acil durum kişisi yok.",
+              style: TextStyle(fontSize: 16),
+            ));
           }
 
           return ListView.builder(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
               var kisi = snapshot.data!.docs[index];
+              var veri = kisi.data() as Map<String, dynamic>;
               return Card(
-                color: Colors.teal[100],
-                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                elevation: 6,
+                margin: EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
                 child: ListTile(
-                  title: Text("${kisi['ad']} ${kisi['soyad']}"),
-                  subtitle: Text("${kisi['yakinlik']} - ${kisi['telefon']}"),
-                  leading: Icon(Icons.person),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  leading: CircleAvatar(
+                    backgroundColor: primaryColor,
+                    radius: 26,
+                    child: Text(
+                      "${veri['ad'][0]}${veri['soyad'][0]}",
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  title: Text(
+                    "${veri['ad']} ${veri['soyad']}",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  subtitle: Text(
+                    "${veri['yakinlik']} • ${veri['telefon']}",
+                    style: TextStyle(color: Colors.grey[700]),
+                  ),
                   trailing: IconButton(
                     icon: Icon(Icons.delete, color: Colors.red),
                     onPressed: () => kisiSil(kisi.id),
                   ),
+                  onTap: () => kisiSecenekleri(context, veri),
                 ),
               );
             },
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: kisiEkle,
-        child: Icon(Icons.add),
+        backgroundColor: primaryColor,
+        icon: Icon(Icons.add),
+        label: Text("Kişi Ekle"),
       ),
     );
   }
