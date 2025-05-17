@@ -34,21 +34,25 @@ List<double> last7Calories = [];  // Firebase verisi ile gelen kalori değerleri
 
   @override
   void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 30),
-    );
-    _progress = Tween<double>(begin: 0, end: 1).animate(_controller);
-    _controller.repeat();
+   super.initState();
 
-    _kontrolVeSifirla();
-    _loadLastSession();
-  _loadLast7Calories(); 
-   _chartUpdateTimer = Timer.periodic(Duration(seconds: 2), (timer) {
-    _loadLast7Calories();   // grafik verisi
+  _controller = AnimationController(
+    vsync: this,
+    duration: Duration(seconds: 30),
+  );
+  _progress = Tween<double>(begin: 0, end: 1).animate(_controller);
+  _controller.repeat();
+
+  _kontrolVeSifirla();
+  _loadLastSession();
+  _loadLast7Calories();
+
+  _chartUpdateTimer = Timer.periodic(Duration(seconds: 2), (timer) {
+    if (mounted) {
+      _loadLast7Calories(); // grafik verisi güncelleniyor
+    }
   });
-  }
+}
 Future<void> _kontrolVeSifirla() async {
   final bugun = DateTime.now();
   final tarihKey = "${bugun.year}-${bugun.month.toString().padLeft(2, '0')}-${bugun.day.toString().padLeft(2, '0')}";
@@ -174,7 +178,7 @@ Future<void> _loadLastSession() async {
 }
 
 
- Future<void> _kaydetYuzmeVerisi({required bool timerRunning}) async {
+ Future<void> _kaydetKosuVerisi({required bool timerRunning}) async {
   final bugun = DateTime.now();
   final tarihKey = "${bugun.year}-${bugun.month.toString().padLeft(2, '0')}-${bugun.day.toString().padLeft(2, '0')}";
   final docRef = FirebaseFirestore.instance.collection('kosu_verileri').doc(tarihKey);
@@ -208,7 +212,7 @@ void startTimer() {
     });
   });
 
-  _kaydetYuzmeVerisi(timerRunning: true); // ZAMANLAYICI DURUMU TRUE
+  _kaydetKosuVerisi(timerRunning: true); // ZAMANLAYICI DURUMU TRUE
 }
 
 void stopTimer() {
@@ -220,7 +224,7 @@ void stopTimer() {
     _pausedSeconds = seconds;
   });
 
-  _kaydetYuzmeVerisi(timerRunning: false); // ZAMANLAYICI DURUMU FALSE
+  _kaydetKosuVerisi(timerRunning: false); // ZAMANLAYICI DURUMU FALSE
 }
 
 
@@ -248,9 +252,9 @@ void stopTimer() {
   @override
   void dispose() {
     _controller.dispose();
-    timer?.cancel();
+    
     if (_timerRunning) {
-      _kaydetYuzmeVerisi(timerRunning: true);
+      _kaydetKosuVerisi(timerRunning: true);
     }
       _chartUpdateTimer?.cancel(); // timer'ı durdur
     super.dispose();

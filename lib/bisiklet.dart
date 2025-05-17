@@ -174,7 +174,7 @@ Future<void> _loadLastSession() async {
 }
 
 
- Future<void> _kaydetYuzmeVerisi({required bool timerRunning}) async {
+ Future<void> _kaydetBisikletVerisi({required bool timerRunning}) async {
   final bugun = DateTime.now();
   final tarihKey = "${bugun.year}-${bugun.month.toString().padLeft(2, '0')}-${bugun.day.toString().padLeft(2, '0')}";
   final docRef = FirebaseFirestore.instance.collection('bisiklet_verileri').doc(tarihKey);
@@ -208,7 +208,7 @@ void startTimer() {
     });
   });
 
-  _kaydetYuzmeVerisi(timerRunning: true); // ZAMANLAYICI DURUMU TRUE
+  _kaydetBisikletVerisi(timerRunning: true); // ZAMANLAYICI DURUMU TRUE
 }
 
 void stopTimer() {
@@ -220,7 +220,7 @@ void stopTimer() {
     _pausedSeconds = seconds;
   });
 
-  _kaydetYuzmeVerisi(timerRunning: false); // ZAMANLAYICI DURUMU FALSE
+  _kaydetBisikletVerisi(timerRunning: false); // ZAMANLAYICI DURUMU FALSE
 }
 
 
@@ -250,7 +250,7 @@ void stopTimer() {
     _controller.dispose();
     timer?.cancel();
     if (_timerRunning) {
-      _kaydetYuzmeVerisi(timerRunning: true);
+      _kaydetBisikletVerisi(timerRunning: true);
     }
      _chartUpdateTimer?.cancel(); // timer'ı durdur
     super.dispose();

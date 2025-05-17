@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:gluco_reminder/profil.dart';
+import 'dart:math';
 
 void main() {
   runApp(MaterialApp(
@@ -19,7 +20,32 @@ class AcilDurumSayfasi extends StatefulWidget {
 
 class _AcilDurumSayfasiState extends State<AcilDurumSayfasi> {
   final Color primaryColor = const Color(0xFF76C7C0);
-  final Color bgColor = const Color(0xFFF1FAFA);
+final Color bgColor = const Color(0xFFFFF8E1); // Krem rengi
+
+
+final List<Map<String, Color>> renkListesi = [
+  {
+    'bgColor': Colors.blue.shade100,
+    'textColor': Colors.blue.shade800,
+  },
+  {
+    'bgColor': Colors.orange.shade100,
+    'textColor': Colors.orange.shade800,
+  },
+  {
+    'bgColor': Colors.green.shade100,
+    'textColor': Colors.green.shade800,
+  },
+  {
+    'bgColor': Colors.purple.shade100,
+    'textColor': Colors.purple.shade800,
+  },
+];
+
+
+Map<String, dynamic> rastgeleRenk() {
+  return renkListesi[Random().nextInt(renkListesi.length)];
+}
 
   void kisiEkle() {
     String ad = '';
@@ -168,7 +194,7 @@ class _AcilDurumSayfasiState extends State<AcilDurumSayfasi> {
   preferredSize: Size.fromHeight(80),
   child: Container(
     padding: EdgeInsets.only(top: 30, left: 16, right: 16, bottom: 12),
-    color: primaryColor, // Sadece renk veriyoruz, border yok
+    color: bgColor, // Sadece renk veriyoruz, border yok
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -189,8 +215,8 @@ class _AcilDurumSayfasiState extends State<AcilDurumSayfasi> {
               Text(
                 "Kullanıcı",
                 style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),
@@ -200,7 +226,7 @@ class _AcilDurumSayfasiState extends State<AcilDurumSayfasi> {
         Text(
           "Acil Durum Sayfası",
           style: TextStyle(
-            color: Colors.white,
+            color: Colors.black,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -227,43 +253,48 @@ class _AcilDurumSayfasiState extends State<AcilDurumSayfasi> {
           }
 
           return ListView.builder(
+            
             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
               var kisi = snapshot.data!.docs[index];
+              final renk = renkListesi[index % renkListesi.length];
+
               var veri = kisi.data() as Map<String, dynamic>;
-              return Card(
-                elevation: 6,
-                margin: EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-                child: ListTile(
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  leading: CircleAvatar(
-                    backgroundColor: primaryColor,
-                    radius: 26,
-                    child: Text(
-                      "${veri['ad'][0]}${veri['soyad'][0]}",
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  title: Text(
-                    "${veri['ad']} ${veri['soyad']}",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                  subtitle: Text(
-                    "${veri['yakinlik']} • ${veri['telefon']}",
-                    style: TextStyle(color: Colors.grey[700]),
-                  ),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => kisiSil(kisi.id),
-                  ),
-                  onTap: () => kisiSecenekleri(context, veri),
-                ),
-              );
+              
+
+return Card(
+  color: renk['bgColor'],
+  elevation: 6,
+  margin: EdgeInsets.symmetric(vertical: 10),
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+  child: ListTile(
+    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    leading: CircleAvatar(
+      backgroundColor: renk['textColor'],
+      radius: 26,
+      child: Icon(Icons.person, color: Colors.white),
+    ),
+    title: Text(
+      "${veri['ad']} ${veri['soyad']}",
+      style: TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 18,
+        color: renk['textColor'],
+      ),
+    ),
+    subtitle: Text(
+      "${veri['yakinlik']} • ${veri['telefon']}",
+      style: TextStyle(color: Colors.grey[800]),
+    ),
+    trailing: IconButton(
+      icon: Icon(Icons.delete, color: Colors.red),
+      onPressed: () => kisiSil(kisi.id),
+    ),
+    onTap: () => kisiSecenekleri(context, veri),
+  ),
+);
+
             },
           );
         },

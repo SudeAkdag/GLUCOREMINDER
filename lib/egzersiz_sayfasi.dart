@@ -275,14 +275,15 @@ String _hesaplaUykuSuresi(String yatmaSaati, String uyanmaSaati) {
         ),
         title: Text(
           'Kullanıcı',
-          style: TextStyle(fontSize: 16),
+          style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold,),
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.all(15.0),
             child: Text(
               'Egzersiz Sayfası',
-              style: TextStyle(fontSize: 20),
+              style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold,),
+              
             ),
           ),
         ],
@@ -768,6 +769,7 @@ Container(
         style: TextStyle(
           fontSize: 14,
           color: Colors.white70,
+          fontWeight: FontWeight.bold,
         ),
       ),
       // Alt istatistik kısmı – tansiyon bilgileriyle değiştirildi
@@ -779,7 +781,7 @@ Row(
       children: [
         Text(
           "Büyük Tansiyon",
-          style: TextStyle(color: Colors.white60, fontSize: 8),
+          style: TextStyle(color: Colors.white60, fontSize: 8,fontWeight: FontWeight.bold,),
         ),
         Text(
           _latestBuyukTansiyon != null ? '$_latestBuyukTansiyon mmHg' : '--',
@@ -792,7 +794,7 @@ Row(
       children: [
         Text(
           "Küçük Tansiyon",
-          style: TextStyle(color: Colors.white60, fontSize: 8),
+          style: TextStyle(color: Colors.white60, fontSize: 8,fontWeight: FontWeight.bold,),
         ),
         Text(
           _latestKucukTansiyon != null ? '$_latestKucukTansiyon mmHg' : '--',
@@ -835,7 +837,7 @@ Row(
           children: [
             Text(
               "Uyku Süresi",
-              style: TextStyle(color: Colors.white, fontSize: 18),
+              style: TextStyle(color: Colors.white, fontSize: 18,fontWeight: FontWeight.bold,),
             ),
            FutureBuilder<QuerySnapshot>(
   future: FirebaseFirestore.instance
@@ -865,7 +867,7 @@ Row(
                       uykuSuresi,
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 28,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
