@@ -18,10 +18,10 @@ class EgzersizSayfasi extends StatefulWidget {
   EgzersizSayfasi({super.key});
 
   final List<Map<String, dynamic>> egzersizler = [
-    {'icon': Icons.pool, 'name': 'Yüzme'},
-    {'icon': Icons.directions_run, 'name': 'Koşu'},
-    {'icon': Icons.directions_walk, 'name': 'Yürüyüş'},
-    {'icon': Icons.pedal_bike, 'name': 'Bisiklet'},
+    {'icon': Icons.pool, 'name': 'Yüzme','bgColor': Colors.blue.shade100,'textColor': Colors.blue},
+    {'icon': Icons.directions_run, 'name': 'Koşu','bgColor': Colors.orange.shade100,'textColor': Colors.orange},
+    {'icon': Icons.directions_walk, 'name': 'Yürüyüş','bgColor': Colors.green.shade100,'textColor': Colors.green},
+    {'icon': Icons.pedal_bike, 'name': 'Bisiklet','bgColor': Colors.purple.shade100,'textColor': Colors.purple},
   ];
 
   @override
@@ -35,7 +35,9 @@ class _EgzersizSayfasi extends State<EgzersizSayfasi>
   String? _latestBpm;
   double _totalCalories = 0;
   double _totalSeconds = 0;
-  
+  int? _latestBuyukTansiyon;
+int? _latestKucukTansiyon;
+
 
 @override
 void initState() {
@@ -54,9 +56,29 @@ void initState() {
   // Opsiyonel: Verileri her 1 saniyede bir güncelle
   Timer.periodic(Duration(seconds: 1), (timer) {
     _fetchTodayTotals();
+     _getLatestTansiyon();
+  _getLatestBpm();
   });
   
 }
+
+Future<void> _getLatestTansiyon() async {
+  final snapshot = await FirebaseFirestore.instance
+      .collection('kalp_verileri')
+      .orderBy('kayitZamani', descending: true)
+      .limit(1)
+      .get();
+
+  if (snapshot.docs.isNotEmpty) {
+    final data = snapshot.docs.first.data();
+    setState(() {
+      _latestBuyukTansiyon = data['buyukTansiyon'];
+      _latestKucukTansiyon = data['kucukTansiyon'];
+    });
+  }
+}
+
+
 Future<List<Map<String, dynamic>>> _getTodayDataFromCollection(String collectionName) async {
   DateTime now = DateTime.now();
   DateTime startOfDay = DateTime(now.year, now.month, now.day);
@@ -115,6 +137,7 @@ void _getLatestBpm() async {
   void dispose() {
     _heartAnimationController.dispose();
     super.dispose();
+      _getLatestTansiyon();
     
   }
 
@@ -265,10 +288,22 @@ String _hesaplaUykuSuresi(String yatmaSaati, String uyanmaSaati) {
             Container(
               width: double.infinity,
               padding: EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(100),
-              ),
+             decoration: BoxDecoration(
+  gradient: LinearGradient(
+    colors: [
+      Colors.blue.shade100,
+      Colors.blue.shade200,
+      Colors.blue.shade300,
+      Colors.blue.shade200,
+      Colors.blue.shade100,
+   
+    ],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  ),
+  borderRadius: BorderRadius.circular(100),
+),
+
               child: Center(
                 child: Text(
                   "EGZERSİZLER",
@@ -290,7 +325,7 @@ String _hesaplaUykuSuresi(String yatmaSaati, String uyanmaSaati) {
                       borderRadius: BorderRadius.circular(25),
                       child: CircleAvatar(
                         radius: 25,
-                        backgroundColor: Colors.grey[300],
+                        backgroundColor: egzersiz['bgColor'],
                         child: Icon(egzersiz['icon'],
                             size: 24, color: Colors.black),
                       ),
@@ -299,7 +334,7 @@ String _hesaplaUykuSuresi(String yatmaSaati, String uyanmaSaati) {
                     Text(
                       egzersiz['name'],
                       style: TextStyle(
-                        color: Colors.blueAccent,
+                        color: egzersiz['textColor'],
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         decoration: TextDecoration.none, // Alt çizgi kaldırıldı
@@ -316,10 +351,18 @@ String _hesaplaUykuSuresi(String yatmaSaati, String uyanmaSaati) {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 170,
+              width: 180,
               height: 120,
               decoration: BoxDecoration(
-                color: Colors.pink[200],
+                gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.greenAccent,
+                             Colors.blueAccent,
+                            Colors.greenAccent,
+                          ],
+                        ),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Column(
@@ -349,10 +392,18 @@ String _hesaplaUykuSuresi(String yatmaSaati, String uyanmaSaati) {
             ),
             SizedBox(width: 30),
             Container(
-              width: 170,
+              width: 180,
               height: 120,
               decoration: BoxDecoration(
-                color: Colors.pink[200],
+                  gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.greenAccent,
+                             Colors.blueAccent,
+                            Colors.greenAccent,
+                          ],
+                        ),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Column(
@@ -387,92 +438,146 @@ String _hesaplaUykuSuresi(String yatmaSaati, String uyanmaSaati) {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Su Tüketimi Container'ı
-                Container(
-                  width: 175, // Dar bir genişlik
-                  height: 250, // Uzun bir yükseklik
-                  padding: EdgeInsets.all(8), // Kenarlardan boşluk
-                  decoration: BoxDecoration(
-                    color: Colors.blue[200], // Su için mavi renk
-                    borderRadius: BorderRadius.circular(15),
+        Container(
+  width: 180,
+  height: 260,
+  padding: EdgeInsets.all(14),
+  decoration: BoxDecoration(
+    gradient: LinearGradient(
+      colors: [Color(0xFF74ebd5), Color(0xFFACB6E5)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    borderRadius: BorderRadius.circular(24),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.blueAccent.withOpacity(0.3),
+        blurRadius: 15,
+        offset: Offset(0, 6),
+      ),
+    ],
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.local_drink, color: Colors.white, size: 26),
+          SizedBox(width: 8),
+          Text(
+            "Su Tüketimi",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      SizedBox(height: 12),
+      Expanded(
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            Container(
+              width: 80,
+              height: 160,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white.withOpacity(0.2),
+              ),
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  AnimatedContainer(
+                    duration: Duration(milliseconds: 700),
+                    width: 80,
+                    height: 160 * (waterLevel / maxWater),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Su Tüketimi",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                  Positioned(
+                    top: 8,
+                    child: Text(
+                      "${(waterLevel * 1000).toStringAsFixed(0)} ml",
+                      style: TextStyle(
+                        color: Colors.blueAccent,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        shadows: [Shadow(blurRadius: 5, color: Colors.black45)],
                       ),
-                      Expanded(
-                        child: Stack(
-                          alignment: Alignment.bottomCenter,
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.only(
-                                  bottom:
-                                      60), //  Su animasyonunu biraz yukarı kaydır
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 800),
-                                width: 100,
-                                height: 175 * (waterLevel / maxWater),
-                                decoration: BoxDecoration(
-                                  color: Color.fromRGBO(0, 0, 255, 0.6),
-                                  borderRadius: BorderRadius.vertical(
-                                    bottom: Radius.circular(12),
-                                    top: Radius.circular(
-                                        waterLevel > 0 ? 12 : 0),
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    "${(waterLevel * 1000).toStringAsFixed(0)} ml",
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 1,
-                              child: ElevatedButton(
-                                onPressed: _increaseWater,
-                                child: const Text("+250ml"),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      SizedBox(height: 14),
+      ElevatedButton(
+        onPressed: _increaseWater,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.blueAccent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          elevation: 5,
+        ),
+        child: Text(
+          "+250 ml",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+      ),
+    ],
+  ),
+),
+
+
 
               SizedBox(width: 30), // Aralık
 Container(
-  width: 175, // Dar bir genişlik
-  height: 250, // Uzun bir yükseklik
-  padding: EdgeInsets.all(8), // Kenarlardan boşluk
+  width: 180,
+  height: 260,
+  padding: EdgeInsets.all(12),
   decoration: BoxDecoration(
-    color: Colors.red[200], // Kalp atışı için kırmızı renk
-    borderRadius: BorderRadius.circular(15),
+  borderRadius: BorderRadius.circular(20),
+  image: DecorationImage(
+    image: AssetImage('assets/kalp.png'),
+    fit: BoxFit.cover,
+    colorFilter: ColorFilter.mode(
+      Colors.black.withOpacity(0.5), // saydamlık ve koyuluk için
+      BlendMode.darken,
+    ),
   ),
+),
   child: Column(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    crossAxisAlignment: CrossAxisAlignment.center,
     children: [
-      // Kalp Atışı Başlığı ve Ayar Butonu
+      // Başlık ve Ayar Butonu
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             "Kalp Atışı",
             style: TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold),
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           IconButton(
-            icon: Icon(Icons.more_horiz), // Üç nokta ikonu gibi küçük bir buton
-            onPressed: () {
+            icon: Icon(Icons.more_horiz, color: Colors.white),
+          onPressed: () {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
@@ -541,7 +646,6 @@ Container(
     }
   },
 ),
-
                         ],
                       ),
                     ),
@@ -552,7 +656,7 @@ Container(
                           Navigator.of(context).pop();
                         },
                       ),
-      TextButton(
+                     TextButton(
   child: Text("Kaydet"),
   onPressed: () async {
     int? kalpAtisiVerisi = int.tryParse(heartRateController.text);
@@ -565,7 +669,7 @@ Container(
         kucukTansiyon != null &&
         olcumZamani.isNotEmpty) {
       
-      // Veriyi kaydet
+      // Firestore'a veri ekle
       await FirebaseFirestore.instance.collection('kalp_verileri').add({
         'kalpAtisi': kalpAtisiVerisi,
         'buyukTansiyon': buyukTansiyon,
@@ -574,7 +678,9 @@ Container(
         'kayitZamani': FieldValue.serverTimestamp(),
       });
 
-      _getLatestBpm();
+      // Kalp ve tansiyon verilerini güncelle
+              // kalp atışı
+      await _getLatestTansiyon();    
 
       Navigator.of(context).pop();
     } else {
@@ -584,6 +690,7 @@ Container(
     }
   },
 ),
+
                     ],
                   );
                 },
@@ -592,44 +699,57 @@ Container(
           ),
         ],
       ),
-      // Atan Kalp Animasyonu
-      Expanded(
-        child: AnimatedBuilder(
-          animation: _heartAnimationController,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: 1.5 +
-                  0.3 *
-                      _heartAnimationController
-                          .value, // Büyüyüp küçülen kalp
-              child: Icon(
-                Icons.favorite,
-                color: Colors.red,
-                size: 60,
-              ),
-            );
-          },
+
+      // Kalp atışı değeri (büyük ve sade)
+      Text(
+        _latestBpm != null ? '$_latestBpm' : '',
+        style: TextStyle(
+          fontSize: 48,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
         ),
       ),
 
-      // Kullanıcının Kalp Atışı Değeri
-   Container(
-  height: 30,
-  width: 100, // <<< SABİT yükseklik ekliyoruz
-  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(10),
-  ),
-  alignment: Alignment.center, // <<< Yazıyı ortalamak için
-  child: Text(
-       _latestBpm != null ? '$_latestBpm bpm' : '',
-    style: TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.bold,
+      Text(
+        "bpm",
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.white70,
+        ),
+      ),
+      // Alt istatistik kısmı – tansiyon bilgileriyle değiştirildi
+Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Büyük Tansiyon",
+          style: TextStyle(color: Colors.white60, fontSize: 8),
+        ),
+        Text(
+          _latestBuyukTansiyon != null ? '$_latestBuyukTansiyon mmHg' : '--',
+          style: TextStyle(color: Colors.pinkAccent, fontSize: 16),
+        ),
+      ],
     ),
-  ),
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          "Küçük Tansiyon",
+          style: TextStyle(color: Colors.white60, fontSize: 8),
+        ),
+        Text(
+          _latestKucukTansiyon != null ? '$_latestKucukTansiyon mmHg' : '--',
+          style: TextStyle(color: Colors.pinkAccent, fontSize: 16),
+        ),
+      ],
+    ),
+  ],
 ),
+
     ],
   ),
 ),
@@ -640,7 +760,7 @@ Container(
   children: [
     // Arka plan uyku kartı
     Container(
-      height: 180,
+      height: 170,
       width: double.infinity,
       margin: EdgeInsets.only(left: 8, right: 8, top: 8), 
       decoration: BoxDecoration(
