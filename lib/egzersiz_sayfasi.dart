@@ -37,6 +37,7 @@ class _EgzersizSayfasi extends State<EgzersizSayfasi>
   double _totalSeconds = 0;
   int? _latestBuyukTansiyon;
 int? _latestKucukTansiyon;
+late Timer _timer;
 
 
 @override
@@ -55,15 +56,18 @@ void initState() {
     if (mounted) _fetchTodayTotals();
   });
 
-  // Opsiyonel: Verileri her 1 saniyede bir güncelle
-  Timer.periodic(Duration(seconds: 1), (timer) {
+  _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    if (!mounted) {
+      timer.cancel();
+      return;
+    }
+  
     _fetchTodayTotals();
      _getLatestTansiyon();
   _getLatestBpm();
   });
   
 }
-
 Future<void> _getLatestTansiyon() async {
   final snapshot = await FirebaseFirestore.instance
       .collection('kalp_verileri')
@@ -73,6 +77,8 @@ Future<void> _getLatestTansiyon() async {
 
   if (snapshot.docs.isNotEmpty) {
     final data = snapshot.docs.first.data();
+    
+    if (!mounted) return; // Widget hâlâ ağaca bağlı mı kontrolü
     setState(() {
       _latestBuyukTansiyon = data['buyukTansiyon'];
       _latestKucukTansiyon = data['kucukTansiyon'];
@@ -119,7 +125,6 @@ Future<void> _fetchTodayTotals() async {
   });
 }
 
-
 void _getLatestBpm() async {
   final snapshot = await FirebaseFirestore.instance
       .collection('kalp_verileri')
@@ -128,6 +133,7 @@ void _getLatestBpm() async {
       .get();
 
   if (snapshot.docs.isNotEmpty) {
+    if (!mounted) return; // <-- mounted kontrolü eklendi
     setState(() {
       _latestBpm = snapshot.docs.first['kalpAtisi'].toString();
     });
@@ -135,13 +141,12 @@ void _getLatestBpm() async {
 }
 
 
-  @override
-  void dispose() {
-    _heartAnimationController.dispose();
-    super.dispose();
-      _getLatestTansiyon();
-     
-  }
+@override
+void dispose() {
+  _timer.cancel();
+  _heartAnimationController.dispose();
+  super.dispose();
+}
 
   List<Map<String, dynamic>> egzersizVerileri = [];
 
