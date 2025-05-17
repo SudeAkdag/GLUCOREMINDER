@@ -350,88 +350,134 @@ String _hesaplaUykuSuresi(String yatmaSaati, String uyanmaSaati) {
             Column(
   children: [
     Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 180,
-              height: 120,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.greenAccent,
-                             Colors.blueAccent,
-                            Colors.greenAccent,
-                          ],
-                        ),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Column(
-                
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                  
-                    "Toplam Süre",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                  
-                    "$minutes dakika $seconds saniye",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+  mainAxisAlignment: MainAxisAlignment.center,
+  children: [
+    TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 1.0, end: 1.05),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeInOut,
+      builder: (context, scale, child) {
+        return Transform.scale(
+          scale: scale,
+          child: Container(
+  width: 180,
+  height: 130, // YÜKSEKLİĞİ ARTIRILDI
+  decoration: BoxDecoration(
+    gradient: const LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Colors.greenAccent,
+        Colors.blueAccent,
+        Colors.greenAccent,
+      ],
+    ),
+    borderRadius: BorderRadius.circular(15),
+    boxShadow: const [
+      BoxShadow(
+        color: Colors.black12,
+        blurRadius: 8,
+        offset: Offset(2, 4),
+      )
+    ],
+  ),
+  child: Padding(
+    padding: const EdgeInsets.all(10.0),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.access_time, size: 26, color: Colors.white),
+        const SizedBox(height: 6), // Daha az boşluk
+        Text(
+          "$minutes dakika $seconds saniye",
+          style: const TextStyle(
+            fontSize: 18, // Küçültüldü
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          "Toplam Süre",
+          style: TextStyle(
+            fontSize: 12, // Küçültüldü
+            color: Colors.white70,
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+
+        );
+      },
+    ),
+    const SizedBox(width: 30),
+    TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 1.0, end: 1.05),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeInOut,
+      builder: (context, scale, child) {
+        return Transform.scale(
+          scale: scale,
+          child: Container(
+            width: 180,
+            height: 130,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.greenAccent,
+                  Colors.blueAccent,
+                  Colors.greenAccent,
                 ],
               ),
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 8,
+                  offset: Offset(2, 4),
+                )
+              ],
             ),
-            SizedBox(width: 30),
-            Container(
-              width: 180,
-              height: 120,
-              decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.greenAccent,
-                             Colors.blueAccent,
-                            Colors.greenAccent,
-                          ],
-                        ),
-                borderRadius: BorderRadius.circular(15),
-              ),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    "Toplam Kalori",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 8),
+                  const Icon(Icons.local_fire_department,
+                      size: 28, color: Colors.white),
+                  const SizedBox(height: 8),
                   Text(
                     "${_totalCalories.toStringAsFixed(4)} kcal",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.normal,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Toplam Kalori",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white70,
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        );
+      },
+    ),
+  ],
+),
+
   ],
 ),
 
