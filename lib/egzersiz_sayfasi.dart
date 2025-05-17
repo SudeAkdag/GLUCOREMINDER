@@ -51,7 +51,9 @@ void initState() {
   )..repeat(reverse: true);
 
   loadWaterLevel(); 
-  _fetchTodayTotals();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) _fetchTodayTotals();
+  });
 
   // Opsiyonel: Verileri her 1 saniyede bir güncelle
   Timer.periodic(Duration(seconds: 1), (timer) {
@@ -92,7 +94,6 @@ Future<List<Map<String, dynamic>>> _getTodayDataFromCollection(String collection
 
   return snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
 }
-
 Future<void> _fetchTodayTotals() async {
   List<String> collections = ['bisiklet_verileri', 'yuzme_verileri', 'yurume_verileri', 'kosu_verileri'];
 
@@ -100,23 +101,24 @@ Future<void> _fetchTodayTotals() async {
   double totalCalories = 0;
 
   for (String col in collections) {
+    if (!mounted) return; // widget ağacında değilse işlemi iptal et
     List<Map<String, dynamic>> dataList = await _getTodayDataFromCollection(col);
 
     for (var data in dataList) {
-      int sureInSeconds = (data['sure'] ?? 0); // doğrudan saniye cinsinden
-
+      int sureInSeconds = (data['sure'] ?? 0);
       totalSeconds += sureInSeconds;
       totalCalories += (data['kalori'] ?? 0).toDouble();
     }
   }
 
-  if (mounted) {
-    setState(() {
-      _totalSeconds = totalSeconds.toDouble(); // UI'da saniyeden dakika+saniyeye çevireceğiz
-      _totalCalories = totalCalories;
-    });
-  }
+  if (!mounted) return;
+
+  setState(() {
+    _totalSeconds = totalSeconds.toDouble();
+    _totalCalories = totalCalories;
+  });
 }
+
 
 void _getLatestBpm() async {
   final snapshot = await FirebaseFirestore.instance
@@ -138,7 +140,7 @@ void _getLatestBpm() async {
     _heartAnimationController.dispose();
     super.dispose();
       _getLatestTansiyon();
-    
+     
   }
 
   List<Map<String, dynamic>> egzersizVerileri = [];
