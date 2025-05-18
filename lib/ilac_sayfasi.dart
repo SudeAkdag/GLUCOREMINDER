@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gluco_reminder/profil.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 class Ilac {
   String ad;
   String tur;
@@ -274,249 +274,198 @@ class _IlacFormState extends State<IlacForm> {
   late TextEditingController dozajController;
   String? secilenTur;
   String aclikDurumu = "Aç";
-  String secilenZaman = "Sabah"; // Bu artık tam olarak kullanılmayacak, çoklu zaman var
   late TextEditingController miktarController;
   late TextEditingController notController;
 
-  final List<String> turler = [
-    "Tablet",
-    "Şurup",
-    "Enjeksiyon",
-    "Kapsül",
-    "Fitil",
-    "Krem",
-  ];
-
-  final List<String> zamanlar = ["Sabah", "Öğle", "Akşam"];
-  final List<String> aclikDurumlari = ["Aç", "Tok", "Aç ve Tok"];
-
-  // Yeni: Günde kaç kez kullanılacak? 1-3 arası seçim
   int kullanmaSayisi = 1;
-
-  // Her zaman için seçilen saatleri tutalım
   List<TimeOfDay?> secilenSaatler = [null, null, null];
-  Widget _buildTextField(String label, TextEditingController controller) {
-  return TextFormField(
-    controller: controller,
-    decoration: InputDecoration(
-      labelText: label,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      fillColor: Color(0xFFF2F0F3),
-      filled: true,
-    ),
-    validator: (value) =>
-        value == null || value.isEmpty ? "$label boş bırakılamaz" : null,
-  );
-}
 
-Widget _buildDropdown(
-    String label, List<String> items, String? selectedValue, ValueChanged<String?> onChanged) {
-  return DropdownButtonFormField<String>(
-    value: selectedValue,
-    items: items
-        .map((item) => DropdownMenuItem(value: item, child: Text(item)))
-        .toList(),
-    onChanged: onChanged,
-    decoration: InputDecoration(
-      labelText: label,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      filled: true,
-      fillColor: Color(0xFFF2F0F3),
-    ),
-  );
-}
-
-Widget _buildDropdownInt(
-    String label, List<int> items, int selectedValue, ValueChanged<int?> onChanged) {
-  return DropdownButtonFormField<int>(
-    value: selectedValue,
-    items: items
-        .map((item) => DropdownMenuItem(value: item, child: Text("$item kez")))
-        .toList(),
-    onChanged: onChanged,
-    decoration: InputDecoration(
-      labelText: label,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      filled: true,
-      fillColor: Color(0xFFF2F0F3),
-    ),
-  );
-}
-
+  final List<String> turler = [
+    "Tablet", "Şurup", "Enjeksiyon", "Kapsül", "Fitil", "Krem"
+  ];
+  final List<String> aclikDurumlari = ["Aç", "Tok", "Aç ve Tok"];
 
   @override
   void initState() {
     super.initState();
-    final ilac = widget.ilac;
-    adController = TextEditingController(text: ilac?.ad ?? "");
-    dozajController = TextEditingController(text: ilac?.dozaj ?? "");
-    miktarController = TextEditingController(text: ilac?.miktar ?? "");
-    notController = TextEditingController(text: ilac?.not ?? "");
-    secilenTur = ilac?.tur ?? turler[0];
-    aclikDurumu = ilac?.aclikDurumu ?? aclikDurumlari[0];
-    kullanmaSayisi = 1; // Varsayılan 1
+    adController = TextEditingController(text: widget.ilac?.ad ?? '');
+    dozajController = TextEditingController(text: widget.ilac?.dozaj ?? '');
+    miktarController = TextEditingController(text: widget.ilac?.miktar ?? '');
+    notController = TextEditingController(text: widget.ilac?.not ?? '');
+    secilenTur = widget.ilac?.tur;
+    aclikDurumu = widget.ilac?.aclikDurumu ?? "Aç";
 
-    // Saat bilgisi varsa onu da parse et (ilk saat için)
-    if (ilac?.saat != null && ilac!.saat.isNotEmpty) {
-      final parts = ilac.saat.split(":");
-      if (parts.length == 2) {
-        secilenSaatler[0] = TimeOfDay(
-          hour: int.tryParse(parts[0]) ?? 8,
-          minute: int.tryParse(parts[1]) ?? 0,
-        );
-      }
-    }
-    // Eğer daha önce birden fazla saat seçilmişse, onu burada handle etmek için
-    // ilac sınıfını da buna göre genişletmek lazım, şimdilik ilk saati alıyoruz
-    for (int i = 0; i < kullanmaSayisi; i++) {
-      secilenSaatler[i] ??= const TimeOfDay(hour: 8, minute: 0);
+    if (widget.ilac != null) {
+      // Önceden seçilmiş saatleri çözümlemek gerekirse burası uyarlanabilir
     }
   }
 
-    Future<void> _saatSec(int index) async {
-    final TimeOfDay? picked = await showTimePicker(
+  @override
+  void dispose() {
+    adController.dispose();
+    dozajController.dispose();
+    miktarController.dispose();
+    notController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saatSec(int index) async {
+    final TimeOfDay? secilen = await showTimePicker(
       context: context,
-      initialTime: secilenSaatler[index] ?? const TimeOfDay(hour: 8, minute: 0),
+      initialTime: TimeOfDay.now(),
     );
-    if (picked != null) {
+    if (secilen != null) {
       setState(() {
-        secilenSaatler[index] = picked;
+        secilenSaatler[index] = secilen;
       });
     }
   }
 
- @override
-Widget build(BuildContext context) {
-  return Padding(
-    padding: EdgeInsets.only(
-      top: 24,
-      left: 16,
-      right: 16,
-      bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-    ),
-    child: SingleChildScrollView(
-      child: Form(
-        key: _formKey,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 10,
-                spreadRadius: 2,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.medication_liquid, size: 48, color: Color(0xFFB53E6B)),
-              const SizedBox(height: 8),
-              Text(
-                widget.ilac == null ? "Yeni İlaç Ekle" : "İlaç Düzenle",
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFB53E6B),
-                ),
-              ),
-              const SizedBox(height: 20),
+  String _formatTimeOfDay(TimeOfDay tod) {
+    final hour = tod.hourOfPeriod == 0 ? 12 : tod.hourOfPeriod;
+    final period = tod.period == DayPeriod.am ? 'AM' : 'PM';
+    return "$hour:${tod.minute.toString().padLeft(2, '0')} $period";
+  }
 
+  void _onFormSubmit() async {
+    if (_formKey.currentState!.validate()) {
+      final ilac = Ilac(
+        ad: adController.text,
+        tur: secilenTur ?? "",
+        dozaj: dozajController.text,
+        miktar: miktarController.text,
+        zaman: kullanmaSayisi == 1 ? "Tek Zaman" : "Çoklu Zaman",
+        saat: secilenSaatler
+            .where((saat) => saat != null)
+            .map((saat) => _formatTimeOfDay(saat!))
+            .join(', '),
+        aclikDurumu: aclikDurumu,
+        not: notController.text,
+      );
+
+      try {
+        await FirebaseFirestore.instance.collection("ilac_verileri").add({
+          'ad': ilac.ad,
+          'tur': ilac.tur,
+          'dozaj': ilac.dozaj,
+          'miktar': ilac.miktar,
+          'zaman': ilac.zaman,
+          'saat': ilac.saat,
+          'aclikDurumu': ilac.aclikDurumu,
+          'not': ilac.not,
+          'eklenmeZamani': FieldValue.serverTimestamp(),
+        });
+
+        Navigator.pop(context, ilac);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Kayıt hatası: $e")),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
               _buildTextField("İlaç Adı", adController),
               const SizedBox(height: 12),
-
-              _buildDropdown("İlaç Türü", turler, secilenTur, (val) {
-                setState(() => secilenTur = val);
-              }),
+              _buildDropdown("İlaç Türü", turler, secilenTur,
+                  (val) => setState(() => secilenTur = val)),
               const SizedBox(height: 12),
-
-              _buildTextField("Dozaj", dozajController),
+              _buildTextField("Dozaj (örn: 500mg)", dozajController),
               const SizedBox(height: 12),
-
               _buildTextField("Kullanım Miktarı", miktarController),
               const SizedBox(height: 12),
-
-              _buildDropdown("Açlık Durumu", aclikDurumlari, aclikDurumu, (val) {
-                setState(() => aclikDurumu = val ?? "Aç");
-              }),
+              _buildDropdown("Aç/Tok", aclikDurumlari, aclikDurumu,
+                  (val) => setState(() => aclikDurumu = val!)),
+              const SizedBox(height: 12),
+              _buildDropdownInt("Günde kaç kez?", [1, 2, 3], kullanmaSayisi,
+                  (val) => setState(() => kullanmaSayisi = val ?? 1)),
               const SizedBox(height: 12),
 
-              _buildDropdownInt("Günde Kaç Kez?", [1, 2, 3], kullanmaSayisi, (val) {
-                setState(() {
-                  kullanmaSayisi = val!;
-                });
-              }),
-              const SizedBox(height: 12),
-
+              // Zaman seçimi:
               ...List.generate(kullanmaSayisi, (index) {
-                final zamanEtiketi = zamanlar[index];
-                final saat = secilenSaatler[index];
-                return Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF2F0F3),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
-                    leading: const Icon(Icons.schedule, color: Color(0xFF6D2840)),
-                    title: Text("$zamanEtiketi Saati"),
-                    trailing: TextButton(
-                      onPressed: () => _saatSec(index),
-                      child: Text(
-                        saat != null ? saat.format(context) : "Saat Seç",
-                        style: const TextStyle(color: Color(0xFF6D2840)),
-                      ),
+                    title: Text("Zaman ${index + 1} saati seç"),
+                    subtitle: Text(
+                      secilenSaatler[index] != null
+                          ? _formatTimeOfDay(secilenSaatler[index]!)
+                          : "Henüz seçilmedi",
                     ),
+                    trailing: const Icon(Icons.access_time),
+                    onTap: () => _saatSec(index),
                   ),
                 );
               }),
-              const SizedBox(height: 12),
 
               _buildTextField("Not", notController),
-              const SizedBox(height: 24),
-
-              ElevatedButton.icon(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    String zaman = zamanlar.take(kullanmaSayisi).join(", ");
-                    String saat = secilenSaatler
-                        .take(kullanmaSayisi)
-                        .map((s) => s!.format(context))
-                        .join(", ");
-
-                    final yeniIlac = Ilac(
-                      ad: adController.text,
-                      tur: secilenTur ?? "",
-                      dozaj: dozajController.text,
-                      miktar: miktarController.text,
-                      zaman: zaman,
-                      saat: saat,
-                      aclikDurumu: aclikDurumu,
-                      not: notController.text,
-                    );
-                    Navigator.pop(context, yeniIlac);
-                  }
-                },
-                icon: const Icon(Icons.save),
-                label: const Text("Kaydet"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFB53E6B),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _onFormSubmit,
+                child: const Text("Kaydet"),
+              )
             ],
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: const Color(0xFFF2F0F3),
+      ),
+      validator: (value) =>
+          value == null || value.isEmpty ? "$label boş bırakılamaz" : null,
+    );
+  }
+
+  Widget _buildDropdown(String label, List<String> items, String? selectedValue,
+      ValueChanged<String?> onChanged) {
+    return DropdownButtonFormField<String>(
+      value: selectedValue,
+      items:
+          items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: const Color(0xFFF2F0F3),
+      ),
+    );
+  }
+
+  Widget _buildDropdownInt(String label, List<int> items, int selectedValue,
+      ValueChanged<int?> onChanged) {
+    return DropdownButtonFormField<int>(
+      value: selectedValue,
+      items: items
+          .map((item) => DropdownMenuItem(value: item, child: Text("$item kez")))
+          .toList(),
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: const Color(0xFFF2F0F3),
+      ),
+    );
+  }
 }
