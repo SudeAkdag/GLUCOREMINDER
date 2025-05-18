@@ -295,6 +295,54 @@ class _IlacFormState extends State<IlacForm> {
 
   // Her zaman için seçilen saatleri tutalım
   List<TimeOfDay?> secilenSaatler = [null, null, null];
+  Widget _buildTextField(String label, TextEditingController controller) {
+  return TextFormField(
+    controller: controller,
+    decoration: InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      fillColor: Color(0xFFF2F0F3),
+      filled: true,
+    ),
+    validator: (value) =>
+        value == null || value.isEmpty ? "$label boş bırakılamaz" : null,
+  );
+}
+
+Widget _buildDropdown(
+    String label, List<String> items, String? selectedValue, ValueChanged<String?> onChanged) {
+  return DropdownButtonFormField<String>(
+    value: selectedValue,
+    items: items
+        .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+        .toList(),
+    onChanged: onChanged,
+    decoration: InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      filled: true,
+      fillColor: Color(0xFFF2F0F3),
+    ),
+  );
+}
+
+Widget _buildDropdownInt(
+    String label, List<int> items, int selectedValue, ValueChanged<int?> onChanged) {
+  return DropdownButtonFormField<int>(
+    value: selectedValue,
+    items: items
+        .map((item) => DropdownMenuItem(value: item, child: Text("$item kez")))
+        .toList(),
+    onChanged: onChanged,
+    decoration: InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      filled: true,
+      fillColor: Color(0xFFF2F0F3),
+    ),
+  );
+}
+
 
   @override
   void initState() {
@@ -325,27 +373,10 @@ class _IlacFormState extends State<IlacForm> {
     }
   }
 
-  Future<void> _saatSec(int index) async {
+    Future<void> _saatSec(int index) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: secilenSaatler[index] ?? const TimeOfDay(hour: 8, minute: 0),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFFB53E6B),
-              onPrimary: Colors.white,
-              onSurface: Color(0xFFB53E6B),
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFB53E6B),
-              ),
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null) {
       setState(() {
@@ -354,262 +385,138 @@ class _IlacFormState extends State<IlacForm> {
     }
   }
 
-  @override
-  void dispose() {
-    adController.dispose();
-    dozajController.dispose();
-    miktarController.dispose();
-    notController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    String saatMetni(int index) => secilenSaatler[index]?.format(context) ?? "Saat Seçiniz";
-
-    return Padding(
-      padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          left: 20,
-          right: 20,
-          top: 20),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
+ @override
+Widget build(BuildContext context) {
+  return Padding(
+    padding: EdgeInsets.only(
+      top: 24,
+      left: 16,
+      right: 16,
+      bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+    ),
+    child: SingleChildScrollView(
+      child: Form(
+        key: _formKey,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 10,
+                spreadRadius: 2,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const Icon(Icons.medication_liquid, size: 48, color: Color(0xFFB53E6B)),
+              const SizedBox(height: 8),
               Text(
                 widget.ilac == null ? "Yeni İlaç Ekle" : "İlaç Düzenle",
                 style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFB53E6B)),
-              ),
-              const SizedBox(height: 16),
-
-              // İlaç Adı
-              TextFormField(
-                controller: adController,
-                decoration: const InputDecoration(
-                  labelText: "İlaç Adı",
-                  prefixIcon: Icon(Icons.medication, color: Color(0xFFB53E6B)),
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFB53E6B),
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return "İlaç adı boş olamaz";
-                  }
-                  return null;
-                },
               ),
+              const SizedBox(height: 20),
+
+              _buildTextField("İlaç Adı", adController),
               const SizedBox(height: 12),
 
-              // İlaç Türü Dropdown
-              DropdownButtonFormField<String>(
-                value: secilenTur,
-                decoration: const InputDecoration(
-                  labelText: "İlaç Türü",
-                  prefixIcon: Icon(Icons.category, color: Color(0xFFB53E6B)),
-                ),
-                items: turler
-                    .map((tur) =>
-                        DropdownMenuItem(value: tur, child: Text(tur)))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    secilenTur = value;
-                  });
-                },
-              ),
+              _buildDropdown("İlaç Türü", turler, secilenTur, (val) {
+                setState(() => secilenTur = val);
+              }),
               const SizedBox(height: 12),
 
-              // Dozaj
-              TextFormField(
-                controller: dozajController,
-                decoration: const InputDecoration(
-                  labelText: "Dozaj (örn: 2 tablet)",
-                  prefixIcon: Icon(Icons.scale, color: Color(0xFFB53E6B)),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return "Dozaj boş olamaz";
-                  }
-                  return null;
-                },
-              ),
+              _buildTextField("Dozaj", dozajController),
               const SizedBox(height: 12),
 
-              // Miktar
-              TextFormField(
-                controller: miktarController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: "Miktar (adet/mL)",
-                  prefixIcon:
-                      Icon(Icons.confirmation_num, color: Color(0xFFB53E6B)),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return "Miktar boş olamaz";
-                  }
-                  return null;
-                },
-              ),
+              _buildTextField("Kullanım Miktarı", miktarController),
               const SizedBox(height: 12),
 
-              // Günde kaç kez kullanılacak? Dropdown
-              DropdownButtonFormField<int>(
-                value: kullanmaSayisi,
-                decoration: const InputDecoration(
-                  labelText: "Günde kaç kez kullanılacak?",
-                  prefixIcon: Icon(Icons.repeat, color: Color(0xFFB53E6B)),
-                ),
-                items: [1, 2, 3]
-                    .map((sayi) =>
-                        DropdownMenuItem(value: sayi, child: Text("$sayi kez")))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      kullanmaSayisi = value;
-                      // Eksik saatleri default 8:00 olarak ata
-                      for (int i = 0; i < kullanmaSayisi; i++) {
-                        secilenSaatler[i] ??= const TimeOfDay(hour: 8, minute: 0);
-                      }
-                    });
-                  }
-                },
-              ),
+              _buildDropdown("Açlık Durumu", aclikDurumlari, aclikDurumu, (val) {
+                setState(() => aclikDurumu = val ?? "Aç");
+              }),
               const SizedBox(height: 12),
 
-              // Dinamik saat seçimleri
-              Column(
-                children: List.generate(kullanmaSayisi, (index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      children: [
-                        Icon(
-                          index == 0
-                              ? Icons.wb_sunny
-                              : index == 1
-                                  ? Icons.brightness_high
-                                  : Icons.nightlight_round,
-                          color: const Color(0xFFB53E6B),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          zamanlar[index],
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-fontSize: 16),
-),
-const SizedBox(width: 24),
-Expanded(
-child: InkWell(
-onTap: () => _saatSec(index),
-child: InputDecorator(
-decoration: InputDecoration(
-labelText: "Saat Seçiniz",
-prefixIcon: const Icon(Icons.access_time_filled,
-color: Color(0xFFB53E6B)),
-enabledBorder: OutlineInputBorder(
-borderSide:
-const BorderSide(color: Color(0xFFDFA6B9)),
-borderRadius:
-const BorderRadius.all(Radius.circular(12)),
-),
-focusedBorder: OutlineInputBorder(
-borderSide: const BorderSide(
-color: Color(0xFFB53E6B), width: 2),
-borderRadius:
-const BorderRadius.all(Radius.circular(12)),
-),
-),
-child: Text(saatMetni(index)),
-),
-),
-),
-],
-),
-);
-}),
-),
+              _buildDropdownInt("Günde Kaç Kez?", [1, 2, 3], kullanmaSayisi, (val) {
+                setState(() {
+                  kullanmaSayisi = val!;
+                });
+              }),
+              const SizedBox(height: 12),
 
-          // Açlık durumu
-          DropdownButtonFormField<String>(
-            value: aclikDurumu,
-            decoration: const InputDecoration(
-              labelText: "Açlık Durumu",
-              prefixIcon: Icon(Icons.restaurant, color: Color(0xFFB53E6B)),
-            ),
-            items: aclikDurumlari
-                .map((aclik) =>
-                    DropdownMenuItem(value: aclik, child: Text(aclik)))
-                .toList(),
-            onChanged: (value) {
-              setState(() {
-                aclikDurumu = value!;
-              });
-            },
-          ),
-          const SizedBox(height: 12),
-
-          // Not
-          TextFormField(
-            controller: notController,
-            decoration: const InputDecoration(
-              labelText: "Notlar",
-              prefixIcon: Icon(Icons.note, color: Color(0xFFB53E6B)),
-            ),
-            maxLines: 2,
-          ),
-
-          const SizedBox(height: 20),
-
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFB53E6B),
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12))),
-            onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                // İlac objesi oluştur, saatleri stringe dönüştür
-                final saatStr =
-                    secilenSaatler.take(kullanmaSayisi).map((saat) {
-                  if (saat == null) return "08:00";
-                  final h = saat.hour.toString().padLeft(2, '0');
-                  final m = saat.minute.toString().padLeft(2, '0');
-                  return "$h:$m";
-                }).join(","); // Virgülle ayırıyoruz
-
-                final yeniIlac = Ilac(
-                  ad: adController.text.trim(),
-                  tur: secilenTur!,
-                  dozaj: dozajController.text.trim(),
-                  miktar: miktarController.text.trim(),
-                  zaman: kullanmaSayisi == 1
-                      ? zamanlar[0]
-                      : "$kullanmaSayisi kez/gün",
-                  saat: saatStr,
-                  aclikDurumu: aclikDurumu,
-                  not: notController.text.trim(),
+              ...List.generate(kullanmaSayisi, (index) {
+                final zamanEtiketi = zamanlar[index];
+                final saat = secilenSaatler[index];
+                return Container(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2F0F3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ListTile(
+                    leading: const Icon(Icons.schedule, color: Color(0xFF6D2840)),
+                    title: Text("$zamanEtiketi Saati"),
+                    trailing: TextButton(
+                      onPressed: () => _saatSec(index),
+                      child: Text(
+                        saat != null ? saat.format(context) : "Saat Seç",
+                        style: const TextStyle(color: Color(0xFF6D2840)),
+                      ),
+                    ),
+                  ),
                 );
+              }),
+              const SizedBox(height: 12),
 
-                widget.onSubmit(yeniIlac);
-                Navigator.of(context).pop();
-              }
-            },
-            child: Text(
-              widget.ilac == null ? "Ekle" : "Güncelle",
-              style: const TextStyle(fontSize: 18),
-            ),
-          )
-        ],
+              _buildTextField("Not", notController),
+              const SizedBox(height: 24),
+
+              ElevatedButton.icon(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    String zaman = zamanlar.take(kullanmaSayisi).join(", ");
+                    String saat = secilenSaatler
+                        .take(kullanmaSayisi)
+                        .map((s) => s!.format(context))
+                        .join(", ");
+
+                    final yeniIlac = Ilac(
+                      ad: adController.text,
+                      tur: secilenTur ?? "",
+                      dozaj: dozajController.text,
+                      miktar: miktarController.text,
+                      zaman: zaman,
+                      saat: saat,
+                      aclikDurumu: aclikDurumu,
+                      not: notController.text,
+                    );
+                    Navigator.pop(context, yeniIlac);
+                  }
+                },
+                icon: const Icon(Icons.save),
+                label: const Text("Kaydet"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFB53E6B),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     ),
-  ),
-);
-  }
+  );
+}
 }
