@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:gluco_reminder/acil_durum_sayfasi.dart';
@@ -47,7 +48,14 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadNextAppointment();
     _loadChartData();
-    _exerciseDataFuture = _fetchTodayTotals();
+    _fetchTodayTotals();
+
+    // Her 5 saniyede bir verileri güncelle
+    Timer.periodic(Duration(seconds: 5), (timer) {
+      if (mounted) {
+        _fetchTodayTotals();
+      }
+    });
   }
 
   // Yaklaşan randevuyu tek seferde yükle
@@ -307,9 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  late Future<Map<String, int>> _exerciseDataFuture;
-
-  Future<Map<String, int>> _fetchTodayTotals() async {
+  Future<void> _fetchTodayTotals() async {
     List<String> collections = [
       'bisiklet_verileri',
       'yuzme_verileri',
@@ -321,35 +327,23 @@ class _HomeScreenState extends State<HomeScreen> {
     double totalCalories = 0;
 
     for (String col in collections) {
-      if (!mounted) {
-        return {
-          'sure': 0,
-          'kalori': 0
-        }; // widget ağacında değilse işlemi iptal et
-      }
+      if (!mounted) return;
       List<Map<String, dynamic>> dataList =
           await _getTodayDataFromCollection(col);
 
       for (var data in dataList) {
-        final sureInSeconds = int.tryParse(data['sure'].toString()) ?? 0;
+        int sureInSeconds = (data['sure'] ?? 0);
         totalSeconds += sureInSeconds;
-
         totalCalories += (data['kalori'] ?? 0).toDouble();
       }
     }
 
-    if (!mounted) return {'sure': 0, 'kalori': 0};
+    if (!mounted) return;
 
     setState(() {
       _totalSeconds = totalSeconds.toDouble();
       _totalCalories = totalCalories;
     });
-
-    // Return the values as Map<String, int>
-    return {
-      'sure': (totalSeconds / 60).round(), // convert seconds to minutes
-      'kalori': totalCalories.round(),
-    };
   }
 
   Future<List<Map<String, dynamic>>> _getTodayDataFromCollection(
@@ -509,71 +503,53 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     SizedBox(width: 10),
-                    FutureBuilder<Map<String, int>>(
-                      future: _exerciseDataFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const SizedBox(
-                            height: 150,
-                            width: 180,
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        } else if (snapshot.hasError) {
-                          return SizedBox(
-                            height: 150,
-                            width: 180,
-                            child: Center(
-                              child: Text('Hata: ${snapshot.error}'),
-                            ),
-                          );
-                        }
-
-                        final data = snapshot.data!;
-                        final kalori = data['kalori']!;
-                        final totalSeconds = data['sure']!;
-                        final minutes = totalSeconds ~/ 60;
-                        final seconds = totalSeconds % 60;
-
-                        return Container(
-                          height: 150,
-                          width: 180,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.greenAccent,
-                                Colors.green,
-                                Colors.blueAccent,
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.5),
-                                spreadRadius: 2,
-                                blurRadius: 5,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
+                    Container(
+                      height: 150,
+                      width: 180,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.greenAccent,
+                            Colors.green,
+                            Colors.blueAccent,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Row(
+                        ],
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("Egzersiz Takibi",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                )),
+                            const SizedBox(height: 14),
+                            Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.fitness_center_rounded,
-                                  size: 50,
+                                  size: 55,
                                   color: Colors.white,
                                 ),
                                 const SizedBox(width: 10),
                                 Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'Egzersiz',
+                                    Text(
+                                      "${_totalCalories.toStringAsFixed(4)} kcal",
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -581,21 +557,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     ),
                                     Text(
-                                      'Süre: ${minutes} dk ${seconds} sn',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                    Text(
-                                      'Kalori: $kalori kcal',
-                                      style:
-                                          const TextStyle(color: Colors.white),
+                                      "${(_totalSeconds ~/ 60)} dakika ${(_totalSeconds % 60).toInt()} sn",
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                      textAlign: TextAlign.center,
                                     ),
                                   ],
                                 ),
                               ],
                             ),
-                          ),
-                        );
-                      },
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
