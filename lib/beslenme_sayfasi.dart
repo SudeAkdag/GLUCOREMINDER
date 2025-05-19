@@ -450,6 +450,7 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                   width: 60,
                   height: 60,
                   child: Stack(
+                    alignment: Alignment.center,
                     children: [
                       CircularProgressIndicator(
                         value: progress,
@@ -457,12 +458,19 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                         backgroundColor: Colors.grey.shade300,
                         color: progress > 0.9 ? Colors.orange : Theme.of(context).primaryColor,
                       ),
-                      Center(
-                        child: Text(
-                          '${(progress * 100).toInt()}%',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                      Container(
+                        alignment: Alignment.center,
+                        width: 40,
+                        height: 40,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '${(progress * 100).toInt()}%',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
@@ -614,7 +622,7 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                             padding: const EdgeInsets.symmetric(horizontal: 8.0),
                             child: Text(
                               'Yemek Tarifleri',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
