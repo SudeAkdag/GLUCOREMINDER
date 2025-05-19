@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Profil extends StatefulWidget {
   const Profil({super.key});
@@ -30,17 +31,41 @@ class _ProfilState extends State<Profil> {
     super.dispose();
   }
 
-  // Soft pastel pembe ve mor tonları
   final Color softPink = const Color(0xFFF8E1F4);
   final Color softPurple = const Color(0xFFD7B3E6);
   final Color pastelPurple = const Color(0xFFBFA2DB);
   final Color pastelText = const Color(0xFF6D4C8A);
   final Color borderColor = const Color(0xFFCEB9DE);
 
+  Future<void> _saveProfileToFirestore() async {
+    try {
+      await FirebaseFirestore.instance.collection('profil_verileri').add({
+        'ad_soyad': _controllers['name']!.text,
+        'dogum_tarihi': _controllers['birthDate']!.text,
+        'cinsiyet': gender,
+        'boy': _controllers['height']!.text,
+        'kilo': _controllers['weight']!.text,
+        'diyabet_tipi': diabetesType,
+        'acil_durum': _controllers['emergency']!.text,
+        'kan_grubu': _controllers['blood']!.text,
+        'iletisim': _controllers['contact']!.text,
+        'eklenme_zamani': FieldValue.serverTimestamp(),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profil kaydedildi')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Kayıt sırasında hata: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Beyaz arka plan
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Profil'),
         centerTitle: true,
@@ -54,51 +79,13 @@ class _ProfilState extends State<Profil> {
           key: _formKey,
           child: Column(
             children: [
-              // Profil avatarı: soft tonlarda, mat ve sade
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [softPurple, softPink],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: pastelPurple.withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.all(5),
-                child: CircleAvatar(
-                  radius: 52,
-                  backgroundColor: Colors.white,
-                  child: CircleAvatar(
-                    radius: 48,
-                    backgroundColor: softPink,
-                    child: Icon(
-                      Icons.person_outline,
-                      size: 58,
-                      color: pastelText.withOpacity(0.7),
-                    ),
-                  ),
-                ),
-              ),
+              _buildAvatar(),
               const SizedBox(height: 24),
-
               _buildTextField('Ad Soyad', _controllers['name']!, icon: Icons.person_outline),
               _buildTextField('Doğum Tarihi', _controllers['birthDate']!, icon: Icons.calendar_today_outlined),
-              _buildDropdown(
-                'Cinsiyet',
-                gender,
-                ['Kadın', 'Erkek'],
-                (v) {
-                  if (v != null) setState(() => gender = v);
-                },
-                icon: Icons.wc_outlined,
-              ),
+              _buildDropdown('Cinsiyet', gender, ['Kadın', 'Erkek'], (v) {
+                if (v != null) setState(() => gender = v);
+              }, icon: Icons.wc_outlined),
               Row(
                 children: [
                   Expanded(
@@ -110,26 +97,18 @@ class _ProfilState extends State<Profil> {
                   ),
                 ],
               ),
-              _buildDropdown(
-                'Diyabet Tipi',
-                diabetesType,
-                ['Tip I', 'Tip II'],
-                (v) {
-                  if (v != null) setState(() => diabetesType = v);
-                },
-                icon: Icons.bloodtype_outlined,
-              ),
+              _buildDropdown('Diyabet Tipi', diabetesType, ['Tip I', 'Tip II'], (v) {
+                if (v != null) setState(() => diabetesType = v);
+              }, icon: Icons.bloodtype_outlined),
               _buildTextField('Acil Durum Bilgisi', _controllers['emergency']!, icon: Icons.warning_amber_outlined),
               _buildTextField('Kan Grubu', _controllers['blood']!, icon: Icons.invert_colors_outlined),
               _buildTextField('İletişim Bilgisi', _controllers['contact']!, icon: Icons.phone_outlined),
               const SizedBox(height: 28),
 
               ElevatedButton.icon(
-                onPressed: () {
+                onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Profil Kaydedildi')),
-                    );
+                    await _saveProfileToFirestore();
                   }
                 },
                 icon: const Icon(Icons.save_outlined),
@@ -145,6 +124,40 @@ class _ProfilState extends State<Profil> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatar() {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [softPurple, softPink],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: pastelPurple.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(5),
+      child: CircleAvatar(
+        radius: 52,
+        backgroundColor: Colors.white,
+        child: CircleAvatar(
+          radius: 48,
+          backgroundColor: softPink,
+          child: Icon(
+            Icons.person_outline,
+            size: 58,
+            color: pastelText.withOpacity(0.7),
           ),
         ),
       ),
@@ -213,22 +226,13 @@ class _ProfilState extends State<Profil> {
             borderSide: BorderSide(color: pastelPurple, width: 2),
           ),
         ),
-        items: options
-            .map(
-              (opt) => DropdownMenuItem<String>(
-                value: opt,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(opt, style: TextStyle(color: pastelText)),
-                ),
-              ),
-            )
-            .toList(),
+        items: options.map((opt) {
+          return DropdownMenuItem<String>(
+            value: opt,
+            child: Text(opt, style: TextStyle(color: pastelText)),
+          );
+        }).toList(),
         onChanged: onChanged,
-        // Aşağıdaki dekorasyon dropdown açılırken de geçerli olması için
         selectedItemBuilder: (context) {
           return options.map((opt) {
             return Container(
