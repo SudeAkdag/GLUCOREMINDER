@@ -34,6 +34,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String _countdownText = "Yaklaşan randevu yok";
   bool _isRandevuLoading = true;
   bool _randevuFound = false;
+  double _totalCalories = 0;
+  double _totalSeconds = 0;
 
   // Grafik verileri
   List<Map<String, dynamic>> _chartData = [];
@@ -45,6 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadNextAppointment();
     _loadChartData();
+    _exerciseDataFuture = _fetchTodayTotals();
   }
 
   // Yaklaşan randevuyu tek seferde yükle
@@ -304,6 +307,68 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  late Future<Map<String, int>> _exerciseDataFuture;
+
+  Future<Map<String, int>> _fetchTodayTotals() async {
+    List<String> collections = [
+      'bisiklet_verileri',
+      'yuzme_verileri',
+      'yurume_verileri',
+      'kosu_verileri'
+    ];
+
+    int totalSeconds = 0;
+    double totalCalories = 0;
+
+    for (String col in collections) {
+      if (!mounted) {
+        return {
+          'sure': 0,
+          'kalori': 0
+        }; // widget ağacında değilse işlemi iptal et
+      }
+      List<Map<String, dynamic>> dataList =
+          await _getTodayDataFromCollection(col);
+
+      for (var data in dataList) {
+        final sureInSeconds = int.tryParse(data['sure'].toString()) ?? 0;
+        totalSeconds += sureInSeconds;
+
+        totalCalories += (data['kalori'] ?? 0).toDouble();
+      }
+    }
+
+    if (!mounted) return {'sure': 0, 'kalori': 0};
+
+    setState(() {
+      _totalSeconds = totalSeconds.toDouble();
+      _totalCalories = totalCalories;
+    });
+
+    // Return the values as Map<String, int>
+    return {
+      'sure': (totalSeconds / 60).round(), // convert seconds to minutes
+      'kalori': totalCalories.round(),
+    };
+  }
+
+  Future<List<Map<String, dynamic>>> _getTodayDataFromCollection(
+      String collectionName) async {
+    DateTime now = DateTime.now();
+    DateTime startOfDay = DateTime(now.year, now.month, now.day);
+    DateTime endOfDay = startOfDay.add(Duration(days: 1));
+
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection(collectionName)
+        .where('zaman_damgasi', isGreaterThanOrEqualTo: startOfDay)
+        .where('zaman_damgasi', isLessThan: endOfDay)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => doc.data() as Map<String, dynamic>)
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -444,53 +509,93 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     SizedBox(width: 10),
-                    Container(
-                      height: 150,
-                      width: 180,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.greenAccent,
-                            Colors.green,
-                            Colors.blueAccent,
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.5),
-                            spreadRadius: 2,
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.fitness_center_rounded,
-                              size: 50,
-                              color: Colors.white,
+                    FutureBuilder<Map<String, int>>(
+                      future: _exerciseDataFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const SizedBox(
+                            height: 150,
+                            width: 180,
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        } else if (snapshot.hasError) {
+                          return SizedBox(
+                            height: 150,
+                            width: 180,
+                            child: Center(
+                              child: Text('Hata: ${snapshot.error}'),
                             ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Text(
-                                  'Egzersiz',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
+                          );
+                        }
+
+                        final data = snapshot.data!;
+                        final kalori = data['kalori']!;
+                        final totalSeconds = data['sure']!;
+                        final minutes = totalSeconds ~/ 60;
+                        final seconds = totalSeconds % 60;
+
+                        return Container(
+                          height: 150,
+                          width: 180,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.greenAccent,
+                                Colors.green,
+                                Colors.blueAccent,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.5),
+                                spreadRadius: 2,
+                                blurRadius: 5,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.fitness_center_rounded,
+                                  size: 50,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 10),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Egzersiz',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Süre: ${minutes} dk ${seconds} sn',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                    Text(
+                                      'Kalori: $kalori kcal',
+                                      style:
+                                          const TextStyle(color: Colors.white),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
