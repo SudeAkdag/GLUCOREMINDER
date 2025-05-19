@@ -37,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _randevuFound = false;
   double _totalCalories = 0;
   double _totalSeconds = 0;
+  double waterLevel = 0.0;
 
   // Grafik verileri
   List<Map<String, dynamic>> _chartData = [];
@@ -49,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadNextAppointment();
     _loadChartData();
     _fetchTodayTotals();
+    loadWaterLevel();
 
     // Her 5 saniyede bir verileri güncelle
     Timer.periodic(Duration(seconds: 5), (timer) {
@@ -56,6 +58,41 @@ class _HomeScreenState extends State<HomeScreen> {
         _fetchTodayTotals();
       }
     });
+  }
+
+  Future<void> loadWaterLevel() async {
+    final doc = await FirebaseFirestore.instance
+        .collection('su_verisi')
+        .doc('aktif_veri')
+        .get();
+
+    final bugun = DateTime.now();
+    final bugunStr =
+        "${bugun.year}-${bugun.month.toString().padLeft(2, '0')}-${bugun.day.toString().padLeft(2, '0')}";
+
+    if (doc.exists) {
+      final data = doc.data()!;
+      final firestoreTarih = data['tarih'];
+
+      if (firestoreTarih == bugunStr) {
+        setState(() {
+          waterLevel = (data['su_seviyesi'] as num).toDouble();
+        });
+      } else {
+        // Tarih değiştiyse sıfırla
+        setState(() {
+          waterLevel = 0.0;
+        });
+        // Firestore'da da sıfırlanmış olarak güncelle
+        await FirebaseFirestore.instance
+            .collection('su_verisi')
+            .doc('aktif_veri')
+            .set({
+          'su_seviyesi': 0.0,
+          'tarih': bugunStr,
+        });
+      }
+    }
   }
 
   // Yaklaşan randevuyu tek seferde yükle
@@ -587,9 +624,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Colors.pinkAccent,
-                            Colors.purpleAccent,
+                            Colors.greenAccent,
                             Colors.blueAccent,
+                            Colors.greenAccent,
                           ],
                         ),
                         borderRadius: BorderRadius.circular(20),
@@ -606,17 +643,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Row(
                           children: [
                             Icon(
-                              Icons.medication_outlined,
-                              size: 50,
+                              Icons.water_drop_rounded,
+                              size: 70,
                               color: Colors.white,
                             ),
+                            const SizedBox(width: 10),
                             Column(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
+                              children: [
                                 Text(
-                                  'İlaç Takibi',
+                                  "${(waterLevel * 1000).toStringAsFixed(0)} ml",
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 23,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
@@ -636,9 +674,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Color(0xFFF0EBE5),
-                            Color(0xFF87575C),
-                            Color(0xFFD1DFBB),
+                            Colors.pinkAccent,
+                            Colors.purpleAccent,
+                            Colors.blueAccent,
                           ],
                         ),
                         borderRadius: BorderRadius.circular(20),
