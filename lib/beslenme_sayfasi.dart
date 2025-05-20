@@ -105,6 +105,19 @@ class Tarif {
   }
 }
 
+// Seçilen besinleri tutmak için sınıf
+class SeciliBesin {
+  final String isim;
+  final int kalori;
+  final String? resimUrl;
+
+  SeciliBesin({
+    required this.isim,
+    required this.kalori,
+    this.resimUrl,
+  });
+}
+
 class BeslenmeSayfasi extends StatefulWidget {
   @override
   _BeslenmeSayfasiState createState() => _BeslenmeSayfasiState();
@@ -122,6 +135,12 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
   // Animation controller for transitions
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+
+  // Seçilen besinleri tutmak için değişkenler
+  SeciliBesin? kahvaltiBesin;
+  SeciliBesin? ogleYemegiBesin;
+  SeciliBesin? aksamYemegiBesin;
+  SeciliBesin? atistirmalikBesin;
 
   @override
   void initState() {
@@ -142,11 +161,46 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     super.dispose();
   }
 
-  // Yemek eklediğimizde günlük kalori hesabını güncelleme
-  void yemekEkle(int kalori) {
+  // Besin eklendiğinde kalori hesabını güncelleme
+  void besinEkle(String ogunTipi, String isim, int kalori, String? resimUrl) {
     setState(() {
+      // Önceki besin varsa, toplam kaloriden çıkar
+      if (ogunTipi == 'Kahvaltı' && kahvaltiBesin != null) {
+        toplamKalori -= kahvaltiBesin!.kalori;
+      } else if (ogunTipi == 'Öğle Yemeği' && ogleYemegiBesin != null) {
+        toplamKalori -= ogleYemegiBesin!.kalori;
+      } else if (ogunTipi == 'Akşam Yemeği' && aksamYemegiBesin != null) {
+        toplamKalori -= aksamYemegiBesin!.kalori;
+      } else if (ogunTipi == 'Atıştırmalık' && atistirmalikBesin != null) {
+        toplamKalori -= atistirmalikBesin!.kalori;
+      }
+
+      // Yeni besini ekle ve toplam kaloriyi güncelle
+      if (ogunTipi == 'Kahvaltı') {
+        kahvaltiBesin = SeciliBesin(isim: isim, kalori: kalori, resimUrl: resimUrl);
+      } else if (ogunTipi == 'Öğle Yemeği') {
+        ogleYemegiBesin = SeciliBesin(isim: isim, kalori: kalori, resimUrl: resimUrl);
+      } else if (ogunTipi == 'Akşam Yemeği') {
+        aksamYemegiBesin = SeciliBesin(isim: isim, kalori: kalori, resimUrl: resimUrl);
+      } else if (ogunTipi == 'Atıştırmalık') {
+        atistirmalikBesin = SeciliBesin(isim: isim, kalori: kalori, resimUrl: resimUrl);
+      }
+
+      // Toplam kaloriye yeni besinin kalorisini ekle
       toplamKalori += kalori;
     });
+
+    // Kullanıcıya geri bildirim göster
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$isim $ogunTipi öğününüze eklendi'),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'Tamam',
+          onPressed: () {},
+        ),
+      ),
+    );
   }
 
   Future<void> tarifleriGetir() async {
@@ -323,6 +377,37 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
 
               SizedBox(height: 16),
 
+              // Öğün seçme menüsü ekle
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: 'Öğün Seç',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      value: 'Kahvaltı',
+                      items: [
+                        DropdownMenuItem(value: 'Kahvaltı', child: Text('Kahvaltı')),
+                        DropdownMenuItem(value: 'Öğle Yemeği', child: Text('Öğle Yemeği')),
+                        DropdownMenuItem(value: 'Akşam Yemeği', child: Text('Akşam Yemeği')),
+                        DropdownMenuItem(value: 'Atıştırmalık', child: Text('Atıştırmalık')),
+                      ],
+                      onChanged: (value) {
+                        // Seçilen öğünü kaydet
+                        setState(() {
+                          _seciliOgun = value!;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 16),
+
               // Yemeği ekleme butonu
               SizedBox(
                 width: double.infinity,
@@ -330,23 +415,17 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                   icon: Icon(Icons.add),
                   label: Text('Öğüne Ekle'),
                   onPressed: () {
-                    // Tarif eklenince toplamKalori'yi güncelle
+                    // Tarif eklenince öğüne göre uygun değişkene ata ve toplamKalori'yi güncelle
                     if (tarif.kalori != null) {
-                      yemekEkle(tarif.kalori!);
+                      String ogun = _seciliOgun;
+                      besinEkle(
+                          ogun,
+                          tarif.isim,
+                          tarif.kalori!,
+                          tarif.resimUrl
+                      );
                     }
                     Navigator.of(context).pop();
-
-                    // Kullanıcıya geri bildirim göster
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${tarif.isim} öğününüze eklendi'),
-                        behavior: SnackBarBehavior.floating,
-                        action: SnackBarAction(
-                          label: 'Tamam',
-                          onPressed: () {},
-                        ),
-                      ),
-                    );
                   },
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 12),
@@ -360,12 +439,38 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     );
   }
 
+  // Dialog için seçili öğün
+  String _seciliOgun = 'Kahvaltı';
+
+  // Öğün için besin seçme fonksiyonu
+  Future<void> _ogunBesinSec(String ogunTipi) async {
+    // Besinler sayfasına git
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BesinSayfasi(ogunTuru: ogunTipi),
+      ),
+    );
+
+    // Eğer sonuç dönerse (null değilse yani bir besin seçilmişse)
+    if (result != null) {
+      // Dönen besin verisini işle - besinler.dart'tan Besin nesnesi dönecek
+      besinEkle(
+          ogunTipi,
+          result.name,
+          result.calories,
+          result.imageUrl.isNotEmpty ? result.imageUrl : null
+      );
+    }
+  }
+
   // Öğün Ekleme Butonları için Custom Widget
   Widget _buildMealButton({
     required String text,
     required IconData icon,
     required Color color,
     required VoidCallback onPressed,
+    SeciliBesin? seciliBesin,
   }) {
     return AnimatedBuilder(
       animation: _fadeAnimation,
@@ -373,19 +478,101 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
         return Opacity(
           opacity: _fadeAnimation.value,
           child: Container(
-            width: 150,
             height: 60,
-            margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: ElevatedButton.icon(
-              icon: Icon(icon, color: Colors.white),
+            child: ElevatedButton(
               onPressed: onPressed,
-              label: Text(text),
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white,
                 backgroundColor: color,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
+                padding: EdgeInsets.zero, // İçerik için padding kaldırıldı
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (seciliBesin == null)
+                    Icon(icon, color: Colors.white),
+                  if (seciliBesin == null)
+                    SizedBox(width: 8),
+                  if (seciliBesin == null)
+                    Text(text, textAlign: TextAlign.center)
+                  else
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(left: 8),
+                            child: seciliBesin.resimUrl != null && seciliBesin.resimUrl!.isNotEmpty
+                                ? ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                seciliBesin.resimUrl!,
+                                width: 40,
+                                height: 40,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white24,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(icon, color: Colors.white, size: 20),
+                                    ),
+                              ),
+                            )
+                                : Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: Colors.white24,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(icon, color: Colors.white, size: 20),
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  seciliBesin.isim,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  '${seciliBesin.kalori} kcal',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.85),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              // Besini değiştirmek için tekrar aynı sayfaya git
+                              _ogunBesinSec(text);
+                            },
+                            icon: Icon(Icons.edit, color: Colors.white, size: 20),
+                            padding: EdgeInsets.all(8),
+                            constraints: BoxConstraints(),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
@@ -485,6 +672,8 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     );
   }
 
+  // Bu kod beslenme_sayfasi.dart dosyasının devamıdır - @override Widget build metodu
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -555,56 +744,61 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                     _buildDailySummary(),
 
                     // Öğün Ekleme Butonları
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 8.0,
-                      runSpacing: 12.0,
-                      children: [
-                        _buildMealButton(
-                          text: 'Kahvaltı Ekle',
-                          icon: Icons.free_breakfast,
-                          color: Colors.orange.shade700,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => BesinSayfasi()),
-                            );
-                          },
-                        ),
-                        _buildMealButton(
-                          text: 'Öğle Yemeği Ekle',
-                          icon: Icons.lunch_dining,
-                          color: Colors.green.shade700,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => BesinSayfasi()),
-                            );
-                          },
-                        ),
-                        _buildMealButton(
-                          text: 'Akşam Yemeği Ekle',
-                          icon: Icons.dinner_dining,
-                          color: Colors.blue.shade700,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => BesinSayfasi()),
-                            );
-                          },
-                        ),
-                        _buildMealButton(
-                          text: 'Atıştırmalık Ekle',
-                          icon: Icons.bakery_dining,
-                          color: Colors.purple.shade700,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => BesinSayfasi()),
-                            );
-                          },
-                        ),
-                      ],
+                    Container(
+                      margin: EdgeInsets.symmetric(vertical: 16),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: _buildMealButton(
+                                  text: 'Kahvaltı',
+                                  icon: Icons.free_breakfast,
+                                  color: Colors.orange.shade700,
+                                  onPressed: () => _ogunBesinSec('Kahvaltı'),
+                                  seciliBesin: kahvaltiBesin,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: _buildMealButton(
+                                  text: 'Öğle Yemeği',
+                                  icon: Icons.lunch_dining,
+                                  color: Colors.green.shade700,
+                                  onPressed: () => _ogunBesinSec('Öğle Yemeği'),
+                                  seciliBesin: ogleYemegiBesin,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: _buildMealButton(
+                                  text: 'Akşam Yemeği',
+                                  icon: Icons.dinner_dining,
+                                  color: Colors.blue.shade700,
+                                  onPressed: () => _ogunBesinSec('Akşam Yemeği'),
+                                  seciliBesin: aksamYemegiBesin,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: _buildMealButton(
+                                  text: 'Atıştırmalık',
+                                  icon: Icons.bakery_dining,
+                                  color: Colors.purple.shade700,
+                                  onPressed: () => _ogunBesinSec('Atıştırmalık'),
+                                  seciliBesin: atistirmalikBesin,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
 
                     // Yemek tarifleri başlığı
@@ -678,61 +872,52 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
                                       children: [
                                         // Tarif resmi
-                                        Stack(
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.vertical(
-                                                top: Radius.circular(16),
-                                              ),
-                                              child: tarif.resimUrl != null && tarif.resimUrl!.isNotEmpty
-                                                  ? Image.network(
-                                                tarif.resimUrl!,
-                                                height: 120,
-                                                width: double.infinity,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) =>
-                                                    Container(
-                                                      height: 120,
-                                                      color: Colors.grey[300],
-                                                      child: Center(
-                                                        child: Icon(
-                                                          Icons.restaurant,
-                                                          size: 40,
-                                                          color: Colors.grey[600],
-                                                        ),
-                                                      ),
-                                                    ),
-                                              )
-                                                  : Container(
-                                                height: 120,
-                                                width: double.infinity,
-                                                color: Colors.grey[300],
-                                                child: Center(
-                                                  child: Icon(
-                                                    Icons.restaurant,
-                                                    size: 40,
-                                                    color: Colors.grey[600],
-                                                  ),
-                                                ),
-                                              ),
+                                        Expanded(
+                                          flex: 3,
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.only(
+                                              topLeft: Radius.circular(16),
+                                              topRight: Radius.circular(16),
                                             ),
-
-                                            // Kalori göstergesi
-                                            if (tarif.kalori != null)
-                                              Positioned(
-                                                top: 8,
-                                                right: 8,
-                                                child: Container(
-                                                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.black54,
-                                                    borderRadius: BorderRadius.circular(12),
+                                            child: tarif.resimUrl != null && tarif.resimUrl!.isNotEmpty
+                                                ? Image.network(
+                                              tarif.resimUrl!,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) =>
+                                                  Container(
+                                                    color: Colors.grey[300],
+                                                    child: Center(child: Icon(Icons.restaurant, size: 36)),
                                                   ),
-                                                  child: Row(
-                                                    mainAxisSize: MainAxisSize.min,
+                                            )
+                                                : Container(
+                                              color: Colors.grey[300],
+                                              child: Center(child: Icon(Icons.restaurant, size: 36)),
+                                            ),
+                                          ),
+                                        ),
+                                        // Tarif bilgileri
+                                        Expanded(
+                                          flex: 2,
+                                          child: Padding(
+                                            padding: EdgeInsets.all(8),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Text(
+                                                  tarif.isim,
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                                if (tarif.kalori != null)
+                                                  Row(
                                                     children: [
                                                       Icon(
                                                         Icons.local_fire_department,
@@ -741,66 +926,15 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                                                       ),
                                                       SizedBox(width: 4),
                                                       Text(
-                                                        '${tarif.kalori}',
+                                                        '${tarif.kalori} kcal',
                                                         style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontWeight: FontWeight.bold,
                                                           fontSize: 12,
+                                                          color: Colors.grey[600],
                                                         ),
                                                       ),
                                                     ],
                                                   ),
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-
-                                        // Tarif bilgileri
-                                        Padding(
-                                          padding: EdgeInsets.all(12),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                tarif.isim,
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              SizedBox(height: 4),
-                                              Text(
-                                                tarif.malzemeler.split('\n').take(2).join(', '),
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey[600],
-                                                ),
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
-                                        Spacer(),
-
-                                        // Detay butonu
-                                        Container(
-                                          alignment: Alignment.center,
-                                          decoration: BoxDecoration(
-                                            color: Theme.of(context).primaryColor.withOpacity(0.1),
-                                            borderRadius: BorderRadius.vertical(
-                                              bottom: Radius.circular(16),
-                                            ),
-                                          ),
-                                          padding: EdgeInsets.symmetric(vertical: 8),
-                                          child: Text(
-                                            'Detayları Gör',
-                                            style: TextStyle(
-                                              color: Theme.of(context).primaryColor,
-                                              fontWeight: FontWeight.bold,
+                                              ],
                                             ),
                                           ),
                                         ),
