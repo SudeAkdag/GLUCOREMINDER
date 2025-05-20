@@ -3,6 +3,7 @@ import 'package:gluco_reminder/profil.dart';
 import 'package:gluco_reminder/besinler.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 
 void main() {
   runApp(MyApp());
@@ -105,15 +106,21 @@ class Tarif {
   }
 }
 
-// Seçilen besinleri tutmak için sınıf
+// Seçilen besinleri tutmak için sınıfı güncelleyelim - protein, yağ ve karbonhidrat ekledik
 class SeciliBesin {
   final String isim;
   final int kalori;
+  final int protein;
+  final int yag;
+  final int karbonhidrat;
   final String? resimUrl;
 
   SeciliBesin({
     required this.isim,
     required this.kalori,
+    required this.protein,
+    required this.yag,
+    required this.karbonhidrat,
     this.resimUrl,
   });
 }
@@ -128,9 +135,12 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
   bool yukleniyor = true;
   String hata = '';
 
-  // Daily summary variables
+  // Besin değerleri değişkenleri
   int toplamKalori = 0;
   int hedefKalori = 2000; // Örnek hedef kalori
+  int toplamProtein = 0;
+  int toplamYag = 0;
+  int toplamKarbonhidrat = 0;
 
   // Animation controller for transitions
   late AnimationController _animationController;
@@ -141,6 +151,9 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
   SeciliBesin? ogleYemegiBesin;
   SeciliBesin? aksamYemegiBesin;
   SeciliBesin? atistirmalikBesin;
+
+  // Dialog için seçili öğün
+  String _seciliOgun = 'Kahvaltı';
 
   @override
   void initState() {
@@ -161,33 +174,116 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     super.dispose();
   }
 
-  // Besin eklendiğinde kalori hesabını güncelleme
-  void besinEkle(String ogunTipi, String isim, int kalori, String? resimUrl) {
+  // Hedef kaloriyi değiştiren dialog
+  void _hedefKaloriDegistir() {
+    final TextEditingController _kaloriController = TextEditingController(text: hedefKalori.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Günlük Hedef Kalori'),
+        content: TextField(
+          controller: _kaloriController,
+          decoration: InputDecoration(
+            labelText: 'Hedef Kalori',
+            hintText: 'Örn: 2000',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          keyboardType: TextInputType.number,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // Girilen değeri kontrol et
+              final yeniHedef = int.tryParse(_kaloriController.text);
+              if (yeniHedef != null && yeniHedef > 0) {
+                setState(() {
+                  hedefKalori = yeniHedef;
+                });
+                Navigator.pop(context);
+
+                // Kullanıcıya bilgi ver
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Hedef kalori $hedefKalori olarak güncellendi'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              } else {
+                // Hatalı giriş
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Lütfen geçerli bir kalori değeri girin'),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: Text('Kaydet'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Besin eklendiğinde kalori ve besin değerlerini güncelleme
+  void besinEkle(String ogunTipi, String isim, int kalori, int protein, int yag, int karbonhidrat, String? resimUrl) {
     setState(() {
-      // Önceki besin varsa, toplam kaloriden çıkar
+      // Önceki besin varsa, toplam değerlerden çıkar
       if (ogunTipi == 'Kahvaltı' && kahvaltiBesin != null) {
         toplamKalori -= kahvaltiBesin!.kalori;
+        toplamProtein -= kahvaltiBesin!.protein;
+        toplamYag -= kahvaltiBesin!.yag;
+        toplamKarbonhidrat -= kahvaltiBesin!.karbonhidrat;
       } else if (ogunTipi == 'Öğle Yemeği' && ogleYemegiBesin != null) {
         toplamKalori -= ogleYemegiBesin!.kalori;
+        toplamProtein -= ogleYemegiBesin!.protein;
+        toplamYag -= ogleYemegiBesin!.yag;
+        toplamKarbonhidrat -= ogleYemegiBesin!.karbonhidrat;
       } else if (ogunTipi == 'Akşam Yemeği' && aksamYemegiBesin != null) {
         toplamKalori -= aksamYemegiBesin!.kalori;
+        toplamProtein -= aksamYemegiBesin!.protein;
+        toplamYag -= aksamYemegiBesin!.yag;
+        toplamKarbonhidrat -= aksamYemegiBesin!.karbonhidrat;
       } else if (ogunTipi == 'Atıştırmalık' && atistirmalikBesin != null) {
         toplamKalori -= atistirmalikBesin!.kalori;
+        toplamProtein -= atistirmalikBesin!.protein;
+        toplamYag -= atistirmalikBesin!.yag;
+        toplamKarbonhidrat -= atistirmalikBesin!.karbonhidrat;
       }
 
-      // Yeni besini ekle ve toplam kaloriyi güncelle
+      // Yeni besini ekle
+      final yeniBesin = SeciliBesin(
+          isim: isim,
+          kalori: kalori,
+          protein: protein,
+          yag: yag,
+          karbonhidrat: karbonhidrat,
+          resimUrl: resimUrl
+      );
+
       if (ogunTipi == 'Kahvaltı') {
-        kahvaltiBesin = SeciliBesin(isim: isim, kalori: kalori, resimUrl: resimUrl);
+        kahvaltiBesin = yeniBesin;
       } else if (ogunTipi == 'Öğle Yemeği') {
-        ogleYemegiBesin = SeciliBesin(isim: isim, kalori: kalori, resimUrl: resimUrl);
+        ogleYemegiBesin = yeniBesin;
       } else if (ogunTipi == 'Akşam Yemeği') {
-        aksamYemegiBesin = SeciliBesin(isim: isim, kalori: kalori, resimUrl: resimUrl);
+        aksamYemegiBesin = yeniBesin;
       } else if (ogunTipi == 'Atıştırmalık') {
-        atistirmalikBesin = SeciliBesin(isim: isim, kalori: kalori, resimUrl: resimUrl);
+        atistirmalikBesin = yeniBesin;
       }
 
-      // Toplam kaloriye yeni besinin kalorisini ekle
+      // Toplam değerleri güncelle
       toplamKalori += kalori;
+      toplamProtein += protein;
+      toplamYag += yag;
+      toplamKarbonhidrat += karbonhidrat;
     });
 
     // Kullanıcıya geri bildirim göster
@@ -207,7 +303,7 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     try {
       final response = await http.get(
         Uri.parse('https://yemek-api-zmox.onrender.com/api/recipes'),
-      );
+      ).timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -388,7 +484,7 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      value: 'Kahvaltı',
+                      value: _seciliOgun,
                       items: [
                         DropdownMenuItem(value: 'Kahvaltı', child: Text('Kahvaltı')),
                         DropdownMenuItem(value: 'Öğle Yemeği', child: Text('Öğle Yemeği')),
@@ -418,10 +514,20 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                     // Tarif eklenince öğüne göre uygun değişkene ata ve toplamKalori'yi güncelle
                     if (tarif.kalori != null) {
                       String ogun = _seciliOgun;
+
+                      // Tarif verileri için protein, yağ ve karbonhidrat değerlerini tahmin et
+                      // Gerçek projede API'dan bu değerleri alabilirsiniz
+                      int tahminiProtein = (tarif.kalori! * 0.2 / 4).round(); // %20 protein
+                      int tahminiYag = (tarif.kalori! * 0.3 / 9).round(); // %30 yağ
+                      int tahminiKarbonhidrat = (tarif.kalori! * 0.5 / 4).round(); // %50 karbonhidrat
+
                       besinEkle(
                           ogun,
                           tarif.isim,
                           tarif.kalori!,
+                          tahminiProtein,
+                          tahminiYag,
+                          tahminiKarbonhidrat,
                           tarif.resimUrl
                       );
                     }
@@ -438,9 +544,6 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
       ),
     );
   }
-
-  // Dialog için seçili öğün
-  String _seciliOgun = 'Kahvaltı';
 
   // Öğün için besin seçme fonksiyonu
   Future<void> _ogunBesinSec(String ogunTipi) async {
@@ -459,6 +562,9 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
           ogunTipi,
           result.name,
           result.calories,
+          result.protein,
+          result.fat,
+          result.carbohydrates,
           result.imageUrl.isNotEmpty ? result.imageUrl : null
       );
     }
@@ -581,98 +687,238 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     );
   }
 
-  // Günlük Özet Widget
-  Widget _buildDailySummary() {
-    double progress = toplamKalori / hedefKalori;
-    if (progress > 1.0) progress = 1.0;
-
-    return Card(
-      elevation: 4,
-      margin: EdgeInsets.symmetric(vertical: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Theme.of(context).primaryColor.withOpacity(0.6),
-              Theme.of(context).primaryColor.withOpacity(0.1),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+  // Toplam besin değerlerini gösteren widget
+  Widget _buildNutritionSummary() {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: Offset(0, 2),
           ),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            Text(
-              'Günlük Besin Özeti',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Alınan Kalori',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 16,
-                        )),
-                    Text(
-                      '$toplamKalori / $hedefKalori kcal',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Theme.of(context).primaryColor,
-                      ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          // Protein
+          Column(
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      shape: BoxShape.circle,
                     ),
-                  ],
-                ),
-                SizedBox(
-                  width: 60,
-                  height: 60,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CircularProgressIndicator(
-                        value: progress,
-                        strokeWidth: 8,
-                        backgroundColor: Colors.grey.shade300,
-                        color: progress > 0.9 ? Colors.orange : Theme.of(context).primaryColor,
-                      ),
-                      Container(
-                        alignment: Alignment.center,
-                        width: 40,
-                        height: 40,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            '${(progress * 100).toInt()}%',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                    ],
+                    child: Icon(Icons.fitness_center, color: Colors.blue, size: 12),
                   ),
+                  SizedBox(width: 4),
+                  Text(
+                    'Protein',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 2),
+              Text(
+                '$toplamProtein g',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+          // Yağ
+          Column(
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.yellow.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.opacity, color: Colors.yellow[700], size: 12),
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    'Yağ',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 2),
+              Text(
+                '$toplamYag g',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          // Karbonhidrat
+          Column(
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.grain, color: Colors.orange, size: 12),
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    'Karbonhidrat',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 2),
+              Text(
+                '$toplamKarbonhidrat g',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  // Bu kod beslenme_sayfasi.dart dosyasının devamıdır - @override Widget build metodu
+  // Günlük Özet Widget - tıklanabilir hale getirildi
+  Widget _buildDailySummary() {
+    double progress = toplamKalori / hedefKalori;
+    if (progress > 1.0) progress = 1.0;
+
+    return GestureDetector(
+      onTap: _hedefKaloriDegistir, // Tıklanınca hedef kalori değiştirme dialogu aç
+      child: Card(
+        elevation: 4,
+        margin: EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Theme.of(context).primaryColor.withOpacity(0.6),
+                Theme.of(context).primaryColor.withOpacity(0.1),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Günlük Besin Özeti',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(width: 4),
+                  // Düzenleme simgesi ekleniyor
+                  Icon(
+                    Icons.edit,
+                    size: 16,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ],
+              ),
+              SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Alınan Kalori',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                          )),
+                      Text(
+                        '$toplamKalori / $hedefKalori kcal',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          value: progress,
+                          strokeWidth: 8,
+                          backgroundColor: Colors.grey.shade300,
+                          color: progress > 0.9 ? Colors.orange : Theme.of(context).primaryColor,
+                        ),
+                        Container(
+                          alignment: Alignment.center,
+                          width: 40,
+                          height: 40,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              '${(progress * 100).toInt()}%',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  // build metodu - beslenme_sayfasi.dart dosyasının devamı
 
   @override
   Widget build(BuildContext context) {
@@ -740,8 +986,11 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                       ),
                     ),
 
-                    // Günlük Özet Paneli
+                    // Günlük Özet Paneli - Tıklanabilir
                     _buildDailySummary(),
+
+                    // Toplam besin değerleri (protein, yağ, karbonhidrat)
+                    _buildNutritionSummary(),
 
                     // Öğün Ekleme Butonları
                     Container(
