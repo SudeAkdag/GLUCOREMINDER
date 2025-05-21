@@ -14,6 +14,28 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+class Randevu {
+  final String id;
+  final String doktorAdi;
+  final String hastaneAdi;
+  final String randevuTuru;
+  final DateTime tarih;
+  final String saat;
+  final String notlar;
+  final DateTime fullDateTime;
+
+  Randevu({
+    required this.id,
+    required this.doktorAdi,
+    required this.hastaneAdi,
+    required this.randevuTuru,
+    required this.tarih,
+    required this.saat,
+    required this.notlar,
+    required this.fullDateTime,
+  });
+}
+
 class _HomeScreenState extends State<HomeScreen> {
   bool showFastingCard = false;
   bool showPostprandialCard = false;
@@ -51,11 +73,21 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadChartData();
     _fetchTodayTotals();
     loadWaterLevel();
+    _startCountdownTimer();
 
     // Her 5 saniyede bir verileri güncelle
     Timer.periodic(Duration(seconds: 5), (timer) {
       if (mounted) {
         _fetchTodayTotals();
+      }
+    });
+  }
+
+  void _startCountdownTimer() {
+    Future.delayed(Duration(seconds: 60), () {
+      if (mounted) {
+        _updateCountdownText();
+        _startCountdownTimer(); // Özyinelemeli çağrı
       }
     });
   }
@@ -96,54 +128,72 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Yaklaşan randevuyu tek seferde yükle
+  // Yaklaşan randevuyu tek seferde yükle
   Future<void> _loadNextAppointment() async {
     setState(() {
       _isRandevuLoading = true;
     });
-
     try {
       final DateTime now = DateTime.now();
-
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('randevular')
-          .where('tarih', isGreaterThanOrEqualTo: Timestamp.fromDate(now))
           .orderBy('tarih', descending: false)
-          .limit(1)
           .get();
-
-      if (snapshot.docs.isNotEmpty) {
-        final doc = snapshot.docs.first;
+      // Şimdi tarih ve saat birlikte değerlendirerek en yakın randevuyu bulalım
+      Randevu? nextAppointment;
+      for (final doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
-
         final Timestamp tarihTimestamp = data['tarih'] as Timestamp;
         final DateTime tarih = tarihTimestamp.toDate();
-        final String randevuSaat = data['saat'] ?? '';
-
-        setState(() {
+        final String saat = data['saat'] ?? '';
+        // Saat bilgisini ayrıştır
+        DateTime fullDateTime = tarih;
+        if (saat.isNotEmpty) {
+          final List<String> saatParts = saat.split(':');
+          if (saatParts.length == 2) {
+            try {
+              final int hour = int.parse(saatParts[0]);
+              final int minute = int.parse(saatParts[1]);
+              fullDateTime =
+                  DateTime(tarih.year, tarih.month, tarih.day, hour, minute);
+            } catch (e) {
+              print('Saat ayrıştırma hatası: $e');
+            }
+          }
+        }
+        // Şu anki zamanı geçmiş randevuları atla
+        if (fullDateTime.isAfter(now)) {
+          // Bir sonraki randevu olarak belirle
+          nextAppointment = Randevu(
+            id: doc.id,
+            doktorAdi: data['doktorAdi'] ?? '',
+            hastaneAdi: data['hastaneAdi'] ?? '',
+            randevuTuru: data['randevuTuru'] ?? '',
+            tarih: tarih,
+            saat: saat,
+            notlar: data['notlar'] ?? '',
+            fullDateTime: fullDateTime,
+          );
+          break; // İlk gelecek randevu bulunduğunda döngüden çık
+        }
+      }
+      setState(() {
+        if (nextAppointment != null) {
           _randevuFound = true;
-          _doktorAdi = data['doktorAdi'] ?? '';
-          _hastaneAdi = data['hastaneAdi'] ?? '';
-          _randevuTuru = data['randevuTuru'] ?? '';
-          _randevuTarih = DateFormat('dd MMMM yyyy').format(tarih);
-          _randevuSaat = randevuSaat;
-          _randevuDateTime = tarih; // Randevu datetime'ını saklıyoruz
-
+          _doktorAdi = nextAppointment.doktorAdi;
+          _hastaneAdi = nextAppointment.hastaneAdi;
+          _randevuTuru = nextAppointment.randevuTuru;
+          _randevuTarih =
+              DateFormat('dd MMMM yyyy').format(nextAppointment.tarih);
+          _randevuSaat = nextAppointment.saat;
+          _randevuDateTime = nextAppointment.fullDateTime;
           // Geri sayım metnini oluştur
           _updateCountdownText();
-        });
-
-        // Periyodik olarak geri sayımı güncelle (ama sık olmasın)
-        Future.delayed(Duration(seconds: 30), () {
-          if (mounted) {
-            _updateCountdownText();
-          }
-        });
-      } else {
-        setState(() {
+        } else {
           _randevuFound = false;
           _countdownText = "Yaklaşan randevu yok";
-        });
-      }
+        }
+      });
     } catch (e) {
       print('Randevu getirme hatası: $e');
     } finally {
@@ -154,34 +204,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Geri sayım metnini güncelle
+  // Geri sayım metnini güncelle
   void _updateCountdownText() {
-    if (_randevuDateTime == null || _randevuSaat == null) return;
-
-    final DateTime randevuTarihi = _randevuDateTime!;
-    final String randevuSaat = _randevuSaat!;
-
-    final List<String> saatParts = randevuSaat.split(':');
-    DateTime randevuDateTime = randevuTarihi;
-
-    if (saatParts.length == 2) {
-      try {
-        final int hour = int.parse(saatParts[0]);
-        final int minute = int.parse(saatParts[1]);
-        randevuDateTime = DateTime(
-          randevuTarihi.year,
-          randevuTarihi.month,
-          randevuTarihi.day,
-          hour,
-          minute,
-        );
-      } catch (e) {
-        print('Saat ayrıştırma hatası: $e');
-      }
-    }
-
+    if (_randevuDateTime == null) return;
     final DateTime now = DateTime.now();
-    final Duration difference = randevuDateTime.difference(now);
-
+    final Duration difference = _randevuDateTime!.difference(now);
     String text;
     if (difference.isNegative) {
       text = "Randevu zamanı geçti";
@@ -189,7 +216,6 @@ class _HomeScreenState extends State<HomeScreen> {
       final int days = difference.inDays;
       final int hours = difference.inHours % 24;
       final int minutes = difference.inMinutes % 60;
-
       if (days > 0) {
         text = "$days gün $hours saat $minutes dk";
       } else if (hours > 0) {
@@ -198,7 +224,6 @@ class _HomeScreenState extends State<HomeScreen> {
         text = "$minutes dk";
       }
     }
-
     setState(() {
       _countdownText = text;
     });

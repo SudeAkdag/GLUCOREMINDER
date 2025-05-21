@@ -43,12 +43,11 @@ class _RandevuEklemeState extends State<RandevuEkleme> {
   // Tarih seçme fonksiyonu
   Future<void> _pickDate() async {
     FocusScope.of(context).unfocus();
-
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime.now().subtract(Duration(days: 365)),
-      lastDate: DateTime.now().add(Duration(days: 365)),
+      initialDate: DateTime.now(), // Bugünü varsayılan yap
+      firstDate: DateTime.now(), // Geçmiş tarihleri engelle - bugünden başla
+      lastDate: DateTime.now().add(Duration(days: 365)), // 1 yıl ileriye kadar
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -68,7 +67,6 @@ class _RandevuEklemeState extends State<RandevuEkleme> {
         );
       },
     );
-
     if (pickedDate != null) {
       setState(() {
         _selectedDate = pickedDate;
@@ -77,13 +75,16 @@ class _RandevuEklemeState extends State<RandevuEkleme> {
     }
   }
 
-  // Saat seçme fonksiyonu
+// Saat seçimi için de kontrol ekleyelim (_pickTime metodunu güncelleyelim)
   Future<void> _pickTime() async {
     FocusScope.of(context).unfocus();
-
+    // Bugünün tarihi seçilmişse, şu anki saatten sonraki saatleri göster
+    bool isToday = _selectedDate?.year == DateTime.now().year &&
+        _selectedDate?.month == DateTime.now().month &&
+        _selectedDate?.day == DateTime.now().day;
     final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
-      initialTime: _selectedTime ?? TimeOfDay.now(),
+      initialTime: TimeOfDay.now(),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -103,11 +104,33 @@ class _RandevuEklemeState extends State<RandevuEkleme> {
         );
       },
     );
-
     if (pickedTime != null) {
+      // Bugün için geçmiş saatleri kontrol et
+      if (isToday) {
+        final now = DateTime.now();
+        final selectedDateTime = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+
+        if (selectedDateTime.isBefore(now)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  'Geçmiş bir saat seçemezsiniz. Lütfen ileriki bir saat seçin.'),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          return;
+        }
+      }
+
       setState(() {
         _selectedTime = pickedTime;
-
         // Saat ve dakikayı iki basamaklı olarak formatla
         final String hour = pickedTime.hour.toString().padLeft(2, '0');
         final String minute = pickedTime.minute.toString().padLeft(2, '0');
@@ -164,6 +187,31 @@ class _RandevuEklemeState extends State<RandevuEkleme> {
   Future<void> _kaydet() async {
     // Form doğrulama
     if (_formKey.currentState!.validate()) {
+      // Tarihi ve saati kontrol et - geçmiş mi?
+      final DateTime now = DateTime.now();
+
+      DateFormat format = DateFormat("dd/MM/yyyy");
+      DateTime tarihDateTime = format.parse(_dateController.text);
+
+      // Seçilen saat bilgilerini al
+      final List<String> saatParts = _timeController.text.split(':');
+      final int hour = int.parse(saatParts[0]);
+      final int minute = int.parse(saatParts[1]);
+
+      final DateTime randevuDateTime = DateTime(tarihDateTime.year,
+          tarihDateTime.month, tarihDateTime.day, hour, minute);
+
+      // Geçmiş bir randevu eklemeye çalışılıyor mu?
+      if (randevuDateTime.isBefore(now)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Geçmiş tarih ve saat için randevu eklenemez!'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
       setState(() {
         _isLoading = true;
       });
