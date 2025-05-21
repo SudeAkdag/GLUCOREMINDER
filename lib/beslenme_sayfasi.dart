@@ -570,7 +570,7 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     }
   }
 
-  // Öğün Ekleme Butonları için Custom Widget
+  // Öğün Ekleme Butonları için Custom Widget - Gradient eklendi
   Widget _buildMealButton({
     required String text,
     required IconData icon,
@@ -578,6 +578,25 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     required VoidCallback onPressed,
     SeciliBesin? seciliBesin,
   }) {
+    // Her öğün için özel gradient renkleri
+    List<Color> gradientColors;
+    switch (text) {
+      case 'Kahvaltı':
+        gradientColors = [Colors.orange.shade600, Colors.orange.shade400, Colors.yellow.shade300];
+        break;
+      case 'Öğle Yemeği':
+        gradientColors = [Colors.green.shade700, Colors.green.shade500, Colors.lightGreen.shade300];
+        break;
+      case 'Akşam Yemeği':
+        gradientColors = [Colors.blue.shade700, Colors.blue.shade500, Colors.lightBlue.shade300];
+        break;
+      case 'Atıştırmalık':
+        gradientColors = [Colors.purple.shade700, Colors.purple.shade500, Colors.purpleAccent.shade100];
+        break;
+      default:
+        gradientColors = [color, color.withOpacity(0.7)];
+    }
+
     return AnimatedBuilder(
       animation: _fadeAnimation,
       builder: (context, child) {
@@ -585,100 +604,122 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
           opacity: _fadeAnimation.value,
           child: Container(
             height: 60,
-            child: ElevatedButton(
-              onPressed: onPressed,
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: color,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: EdgeInsets.zero, // İçerik için padding kaldırıldı
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: gradientColors,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (seciliBesin == null)
-                    Icon(icon, color: Colors.white),
-                  if (seciliBesin == null)
-                    SizedBox(width: 8),
-                  if (seciliBesin == null)
-                    Text(text, textAlign: TextAlign.center)
-                  else
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(left: 8),
-                            child: seciliBesin.resimUrl != null && seciliBesin.resimUrl!.isNotEmpty
-                                ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                seciliBesin.resimUrl!,
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white24,
-                                        borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: gradientColors.first.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onPressed,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: EdgeInsets.zero,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (seciliBesin == null)
+                        Icon(icon, color: Colors.white),
+                      if (seciliBesin == null)
+                        SizedBox(width: 8),
+                      if (seciliBesin == null)
+                        Text(
+                          text,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        )
+                      else
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.only(left: 8),
+                                child: seciliBesin.resimUrl != null && seciliBesin.resimUrl!.isNotEmpty
+                                    ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    seciliBesin.resimUrl!,
+                                    width: 40,
+                                    height: 40,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white24,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Icon(icon, color: Colors.white, size: 20),
+                                        ),
+                                  ),
+                                )
+                                    : Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white24,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(icon, color: Colors.white, size: 20),
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      seciliBesin.isim,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
                                       ),
-                                      child: Icon(icon, color: Colors.white, size: 20),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                              ),
-                            )
-                                : Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: Colors.white24,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(icon, color: Colors.white, size: 20),
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  seciliBesin.isim,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                    Text(
+                                      '${seciliBesin.kalori} kcal',
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.85),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  '${seciliBesin.kalori} kcal',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.85),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  // Besini değiştirmek için tekrar aynı sayfaya git
+                                  _ogunBesinSec(text);
+                                },
+                                icon: Icon(Icons.edit, color: Colors.white, size: 20),
+                                padding: EdgeInsets.all(8),
+                                constraints: BoxConstraints(),
+                              ),
+                            ],
                           ),
-                          IconButton(
-                            onPressed: () {
-                              // Besini değiştirmek için tekrar aynı sayfaya git
-                              _ogunBesinSec(text);
-                            },
-                            icon: Icon(Icons.edit, color: Colors.white, size: 20),
-                            padding: EdgeInsets.all(8),
-                            constraints: BoxConstraints(),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -813,15 +854,15 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     );
   }
 
-  // Günlük Özet Widget - tıklanabilir hale getirildi
+  // Günlük Özet Widget - Gelişmiş gradient eklendi
   Widget _buildDailySummary() {
     double progress = toplamKalori / hedefKalori;
     if (progress > 1.0) progress = 1.0;
 
     return GestureDetector(
-      onTap: _hedefKaloriDegistir, // Tıklanınca hedef kalori değiştirme dialogu aç
+      onTap: _hedefKaloriDegistir,
       child: Card(
-        elevation: 4,
+        elevation: 8,
         margin: EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Container(
@@ -829,13 +870,22 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Theme.of(context).primaryColor.withOpacity(0.6),
-                Theme.of(context).primaryColor.withOpacity(0.1),
+                Colors.teal.shade400,
+                Colors.teal.shade300,
+                Colors.cyan.shade200,
+                Colors.teal.shade100,
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.teal.withOpacity(0.3),
+                blurRadius: 12,
+                offset: Offset(0, 6),
+              ),
+            ],
           ),
           child: Column(
             children: [
@@ -844,16 +894,24 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                 children: [
                   Text(
                     'Günlük Besin Özeti',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    style: TextStyle(
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
-                  SizedBox(width: 4),
-                  // Düzenleme simgesi ekleniyor
-                  Icon(
-                    Icons.edit,
-                    size: 16,
-                    color: Theme.of(context).primaryColor,
+                  SizedBox(width: 8),
+                  Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.edit,
+                      size: 16,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -864,50 +922,61 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Alınan Kalori',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 16,
-                          )),
+                      Text(
+                        'Alınan Kalori',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
                       Text(
                         '$toplamKalori / $hedefKalori kcal',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
-                          color: Theme.of(context).primaryColor,
+                          color: Colors.white,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(
-                    width: 60,
-                    height: 60,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          value: progress,
-                          strokeWidth: 8,
-                          backgroundColor: Colors.grey.shade300,
-                          color: progress > 0.9 ? Colors.orange : Theme.of(context).primaryColor,
-                        ),
-                        Container(
-                          alignment: Alignment.center,
-                          width: 40,
-                          height: 40,
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              '${(progress * 100).toInt()}%',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            value: progress,
+                            strokeWidth: 8,
+                            backgroundColor: Colors.white.withOpacity(0.3),
+                            color: progress > 0.9 ? Colors.orange.shade300 : Colors.white,
+                          ),
+                          Container(
+                            alignment: Alignment.center,
+                            width: 40,
+                            height: 40,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                '${(progress * 100).toInt()}%',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ],
