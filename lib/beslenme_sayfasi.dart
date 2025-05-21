@@ -114,6 +114,7 @@ class SeciliBesin {
   final int yag;
   final int karbonhidrat;
   final String? resimUrl;
+  final String id; // Her besin için unique ID
 
   SeciliBesin({
     required this.isim,
@@ -122,6 +123,7 @@ class SeciliBesin {
     required this.yag,
     required this.karbonhidrat,
     this.resimUrl,
+    required this.id,
   });
 }
 
@@ -146,11 +148,11 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
-  // Seçilen besinleri tutmak için değişkenler
-  SeciliBesin? kahvaltiBesin;
-  SeciliBesin? ogleYemegiBesin;
-  SeciliBesin? aksamYemegiBesin;
-  SeciliBesin? atistirmalikBesin;
+  // Seçilen besinleri tutmak için değişkenler - Artık listeler halinde
+  List<SeciliBesin> kahvaltiBesinler = [];
+  List<SeciliBesin> ogleYemegiBesinler = [];
+  List<SeciliBesin> aksamYemegiBesinler = [];
+  List<SeciliBesin> atistirmalikBesinler = [];
 
   // Dialog için seçili öğün
   String _seciliOgun = 'Kahvaltı';
@@ -233,57 +235,56 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     );
   }
 
+  // Toplam değerleri hesaplayan fonksiyon
+  void _toplamDegerleriHesapla() {
+    toplamKalori = 0;
+    toplamProtein = 0;
+    toplamYag = 0;
+    toplamKarbonhidrat = 0;
+
+    // Tüm öğünlerdeki besinleri topla
+    List<SeciliBesin> tumBesinler = [
+      ...kahvaltiBesinler,
+      ...ogleYemegiBesinler,
+      ...aksamYemegiBesinler,
+      ...atistirmalikBesinler,
+    ];
+
+    for (var besin in tumBesinler) {
+      toplamKalori += besin.kalori;
+      toplamProtein += besin.protein;
+      toplamYag += besin.yag;
+      toplamKarbonhidrat += besin.karbonhidrat;
+    }
+  }
+
   // Besin eklendiğinde kalori ve besin değerlerini güncelleme
   void besinEkle(String ogunTipi, String isim, int kalori, int protein, int yag, int karbonhidrat, String? resimUrl) {
     setState(() {
-      // Önceki besin varsa, toplam değerlerden çıkar
-      if (ogunTipi == 'Kahvaltı' && kahvaltiBesin != null) {
-        toplamKalori -= kahvaltiBesin!.kalori;
-        toplamProtein -= kahvaltiBesin!.protein;
-        toplamYag -= kahvaltiBesin!.yag;
-        toplamKarbonhidrat -= kahvaltiBesin!.karbonhidrat;
-      } else if (ogunTipi == 'Öğle Yemeği' && ogleYemegiBesin != null) {
-        toplamKalori -= ogleYemegiBesin!.kalori;
-        toplamProtein -= ogleYemegiBesin!.protein;
-        toplamYag -= ogleYemegiBesin!.yag;
-        toplamKarbonhidrat -= ogleYemegiBesin!.karbonhidrat;
-      } else if (ogunTipi == 'Akşam Yemeği' && aksamYemegiBesin != null) {
-        toplamKalori -= aksamYemegiBesin!.kalori;
-        toplamProtein -= aksamYemegiBesin!.protein;
-        toplamYag -= aksamYemegiBesin!.yag;
-        toplamKarbonhidrat -= aksamYemegiBesin!.karbonhidrat;
-      } else if (ogunTipi == 'Atıştırmalık' && atistirmalikBesin != null) {
-        toplamKalori -= atistirmalikBesin!.kalori;
-        toplamProtein -= atistirmalikBesin!.protein;
-        toplamYag -= atistirmalikBesin!.yag;
-        toplamKarbonhidrat -= atistirmalikBesin!.karbonhidrat;
-      }
-
       // Yeni besini ekle
       final yeniBesin = SeciliBesin(
-          isim: isim,
-          kalori: kalori,
-          protein: protein,
-          yag: yag,
-          karbonhidrat: karbonhidrat,
-          resimUrl: resimUrl
+        isim: isim,
+        kalori: kalori,
+        protein: protein,
+        yag: yag,
+        karbonhidrat: karbonhidrat,
+        resimUrl: resimUrl,
+        id: DateTime.now().millisecondsSinceEpoch.toString(), // Unique ID
       );
 
+      // Öğün tipine göre listeye ekle
       if (ogunTipi == 'Kahvaltı') {
-        kahvaltiBesin = yeniBesin;
+        kahvaltiBesinler.add(yeniBesin);
       } else if (ogunTipi == 'Öğle Yemeği') {
-        ogleYemegiBesin = yeniBesin;
+        ogleYemegiBesinler.add(yeniBesin);
       } else if (ogunTipi == 'Akşam Yemeği') {
-        aksamYemegiBesin = yeniBesin;
+        aksamYemegiBesinler.add(yeniBesin);
       } else if (ogunTipi == 'Atıştırmalık') {
-        atistirmalikBesin = yeniBesin;
+        atistirmalikBesinler.add(yeniBesin);
       }
 
-      // Toplam değerleri güncelle
-      toplamKalori += kalori;
-      toplamProtein += protein;
-      toplamYag += yag;
-      toplamKarbonhidrat += karbonhidrat;
+      // Toplam değerleri yeniden hesapla
+      _toplamDegerleriHesapla();
     });
 
     // Kullanıcıya geri bildirim göster
@@ -294,6 +295,145 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
         action: SnackBarAction(
           label: 'Tamam',
           onPressed: () {},
+        ),
+      ),
+    );
+  }
+
+  // Besin silme fonksiyonu
+  void besinSil(String ogunTipi, String besinId) {
+    setState(() {
+      if (ogunTipi == 'Kahvaltı') {
+        kahvaltiBesinler.removeWhere((besin) => besin.id == besinId);
+      } else if (ogunTipi == 'Öğle Yemeği') {
+        ogleYemegiBesinler.removeWhere((besin) => besin.id == besinId);
+      } else if (ogunTipi == 'Akşam Yemeği') {
+        aksamYemegiBesinler.removeWhere((besin) => besin.id == besinId);
+      } else if (ogunTipi == 'Atıştırmalık') {
+        atistirmalikBesinler.removeWhere((besin) => besin.id == besinId);
+      }
+
+      // Toplam değerleri yeniden hesapla
+      _toplamDegerleriHesapla();
+    });
+  }
+
+  // Öğündeki besinleri gösteren dialog
+  void _ogunDetayGoster(String ogunTipi, List<SeciliBesin> besinler) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          padding: EdgeInsets.all(16),
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Başlık
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '$ogunTipi Besinleri',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              Divider(),
+              // Besinler listesi
+              Expanded(
+                child: besinler.isEmpty
+                    ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.restaurant_menu, size: 48, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Henüz besin eklenmemiş',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                )
+                    : ListView.builder(
+                  itemCount: besinler.length,
+                  itemBuilder: (context, index) {
+                    final besin = besinler[index];
+                    return Card(
+                      margin: EdgeInsets.only(bottom: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        leading: besin.resimUrl != null && besin.resimUrl!.isNotEmpty
+                            ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            besin.resimUrl!,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(Icons.restaurant_menu, size: 24),
+                                ),
+                          ),
+                        )
+                            : Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(Icons.restaurant_menu, size: 24),
+                        ),
+                        title: Text(
+                          besin.isim,
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text('${besin.kalori} kcal'),
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            besinSil(ogunTipi, besin.id);
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              SizedBox(height: 16),
+              // Besin ekleme butonu
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: Icon(Icons.add),
+                  label: Text('Yeni Besin Ekle'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _ogunBesinSec(ogunTipi);
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -570,13 +710,13 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     }
   }
 
-  // Öğün Ekleme Butonları için Custom Widget - Gradient eklendi
+  // Öğün Ekleme Butonları için Custom Widget - Gradient eklendi ve çoklu besin desteği
   Widget _buildMealButton({
     required String text,
     required IconData icon,
     required Color color,
     required VoidCallback onPressed,
-    SeciliBesin? seciliBesin,
+    required List<SeciliBesin> seciliBesinler,
   }) {
     // Her öğün için özel gradient renkleri
     List<Color> gradientColors;
@@ -622,18 +762,18 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: onPressed,
+                onTap: seciliBesinler.isEmpty ? onPressed : () => _ogunDetayGoster(text, seciliBesinler),
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  padding: EdgeInsets.zero,
+                  padding: EdgeInsets.symmetric(horizontal: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (seciliBesin == null)
+                      if (seciliBesinler.isEmpty)
                         Icon(icon, color: Colors.white),
-                      if (seciliBesin == null)
+                      if (seciliBesinler.isEmpty)
                         SizedBox(width: 8),
-                      if (seciliBesin == null)
+                      if (seciliBesinler.isEmpty)
                         Text(
                           text,
                           textAlign: TextAlign.center,
@@ -647,38 +787,7 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                         Expanded(
                           child: Row(
                             children: [
-                              Padding(
-                                padding: EdgeInsets.only(left: 8),
-                                child: seciliBesin.resimUrl != null && seciliBesin.resimUrl!.isNotEmpty
-                                    ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    seciliBesin.resimUrl!,
-                                    width: 40,
-                                    height: 40,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) =>
-                                        Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white24,
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Icon(icon, color: Colors.white, size: 20),
-                                        ),
-                                  ),
-                                )
-                                    : Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white24,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(icon, color: Colors.white, size: 20),
-                                ),
-                              ),
+                              Icon(icon, color: Colors.white, size: 20),
                               SizedBox(width: 8),
                               Expanded(
                                 child: Column(
@@ -686,17 +795,15 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      seciliBesin.isim,
+                                      '${seciliBesinler.length} besin',
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                     Text(
-                                      '${seciliBesin.kalori} kcal',
+                                      '${seciliBesinler.fold(0, (sum, besin) => sum + besin.kalori)} kcal',
                                       style: TextStyle(
                                         color: Colors.white.withOpacity(0.85),
                                         fontSize: 12,
@@ -706,11 +813,8 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                                 ),
                               ),
                               IconButton(
-                                onPressed: () {
-                                  // Besini değiştirmek için tekrar aynı sayfaya git
-                                  _ogunBesinSec(text);
-                                },
-                                icon: Icon(Icons.edit, color: Colors.white, size: 20),
+                                onPressed: onPressed,
+                                icon: Icon(Icons.add, color: Colors.white, size: 20),
                                 padding: EdgeInsets.all(8),
                                 constraints: BoxConstraints(),
                               ),
@@ -987,7 +1091,6 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
       ),
     );
   }
-  // build metodu - beslenme_sayfasi.dart dosyasının devamı
 
   @override
   Widget build(BuildContext context) {
@@ -1075,7 +1178,7 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                                   icon: Icons.free_breakfast,
                                   color: Colors.orange.shade700,
                                   onPressed: () => _ogunBesinSec('Kahvaltı'),
-                                  seciliBesin: kahvaltiBesin,
+                                  seciliBesinler: kahvaltiBesinler,
                                 ),
                               ),
                               SizedBox(width: 12),
@@ -1085,7 +1188,7 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                                   icon: Icons.lunch_dining,
                                   color: Colors.green.shade700,
                                   onPressed: () => _ogunBesinSec('Öğle Yemeği'),
-                                  seciliBesin: ogleYemegiBesin,
+                                  seciliBesinler: ogleYemegiBesinler,
                                 ),
                               ),
                             ],
@@ -1100,7 +1203,7 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                                   icon: Icons.dinner_dining,
                                   color: Colors.blue.shade700,
                                   onPressed: () => _ogunBesinSec('Akşam Yemeği'),
-                                  seciliBesin: aksamYemegiBesin,
+                                  seciliBesinler: aksamYemegiBesinler,
                                 ),
                               ),
                               SizedBox(width: 12),
@@ -1110,7 +1213,7 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                                   icon: Icons.bakery_dining,
                                   color: Colors.purple.shade700,
                                   onPressed: () => _ogunBesinSec('Atıştırmalık'),
-                                  seciliBesin: atistirmalikBesin,
+                                  seciliBesinler: atistirmalikBesinler,
                                 ),
                               ),
                             ],
