@@ -166,7 +166,7 @@ class _IlacSayfasiState extends State<IlacSayfasi> {
     return Scaffold(
       backgroundColor: const Color(0xFFFDEEF8),
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 245, 157, 179),
+        backgroundColor: const Color.fromARGB(255, 244, 219, 225),
         foregroundColor: const Color.fromARGB(255, 177, 64, 103),
         elevation: 0,
         leading: IconButton(
@@ -183,9 +183,12 @@ class _IlacSayfasiState extends State<IlacSayfasi> {
         ),
         title: const Text('Kullanıcı',style: TextStyle(fontSize:16) ),
         actions: const [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Icon(Icons.medication, color: Color(0xFF6D2840)),
+          Padding(padding: const EdgeInsets.all(15.0),
+            child: Text(
+              'İlaç Sayfası',
+              style: TextStyle(fontSize: 20),
+            ),
+            
           ),
         ],
       ),
