@@ -67,7 +67,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF4FD2D2), // Set scaffold background
+      backgroundColor: Color(0xFF6200EE), // Set scaffold background
       body: Container(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
@@ -76,10 +76,10 @@ class _LoginPageState extends State<LoginPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF4FD2D2),
-              Color(0xFF76C7C0),
-              Color(0xFF9DBEBB),
-              Color(0xFFF8F9FA),
+              Color(0xFF6200EE),
+              Color(0xFF3700B3),
+              Color(0xFF03DAC6),
+              Color(0xFFBB86FC),
             ],
             stops: [0.0, 0.3, 0.7, 1.0],
           ),
@@ -91,8 +91,8 @@ class _LoginPageState extends State<LoginPage> {
               width: MediaQuery.of(context).size.width,
               constraints: BoxConstraints(
                 minHeight: MediaQuery.of(context).size.height -
-                           MediaQuery.of(context).padding.top -
-                           MediaQuery.of(context).padding.bottom,
+                    MediaQuery.of(context).padding.top -
+                    MediaQuery.of(context).padding.bottom,
               ),
               padding: const EdgeInsets.all(24.0),
               child: Form(
@@ -118,7 +118,7 @@ class _LoginPageState extends State<LoginPage> {
                                 colors: [
                                   Colors.white,
                                   Colors.white.withOpacity(0.9),
-                                  Color(0xFF4FD2D2).withOpacity(0.3),
+                                  Color(0xFF03DAC6).withOpacity(0.3),
                                 ],
                               ),
                               shape: BoxShape.circle,
@@ -133,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
                             child: Icon(
                               Icons.medical_services,
                               size: 60,
-                              color: Color(0xFF2A9D9D),
+                              color: Color(0xFF6200EE),
                             ),
                           ),
                           SizedBox(height: 24),
@@ -160,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
                               style: TextStyle(
                                 fontSize: 32,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF2A9D9D),
+                                color: Color(0xFF6200EE),
                               ),
                             ),
                           ),
@@ -201,13 +201,13 @@ class _LoginPageState extends State<LoginPage> {
                         decoration: InputDecoration(
                           labelText: 'E-posta',
                           hintText: 'ornek@email.com',
-                          labelStyle: TextStyle(color: Color(0xFF2A9D9D)),
+                          labelStyle: TextStyle(color: Color(0xFF6200EE)),
                           hintStyle: TextStyle(color: Colors.grey[600]),
                           prefixIcon: Container(
                             margin: EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [Color(0xFF4FD2D2), Color(0xFF2A9D9D)],
+                                colors: [Color(0xFF6200EE), Color(0xFF3700B3)],
                               ),
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -272,13 +272,13 @@ class _LoginPageState extends State<LoginPage> {
                         decoration: InputDecoration(
                           labelText: 'Şifre',
                           hintText: 'Şifrenizi girin',
-                          labelStyle: TextStyle(color: Color(0xFF2A9D9D)),
+                          labelStyle: TextStyle(color: Color(0xFF6200EE)),
                           hintStyle: TextStyle(color: Colors.grey[600]),
                           prefixIcon: Container(
                             margin: EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [Color(0xFF4FD2D2), Color(0xFF2A9D9D)],
+                                colors: [Color(0xFF6200EE), Color(0xFF3700B3)],
                               ),
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -287,7 +287,7 @@ class _LoginPageState extends State<LoginPage> {
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                              color: Color(0xFF4FD2D2),
+                              color: Color(0xFF03DAC6),
                             ),
                             onPressed: () {
                               setState(() {
@@ -342,7 +342,7 @@ class _LoginPageState extends State<LoginPage> {
                           colors: [
                             Colors.white,
                             Colors.white.withOpacity(0.9),
-                            Color(0xFF4FD2D2).withOpacity(0.3),
+                            Color(0xFFBB86FC).withOpacity(0.3),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
@@ -364,15 +364,15 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         child: _isLoading
-                            ? CircularProgressIndicator(color: Color(0xFF2A9D9D))
+                            ? CircularProgressIndicator(color: Color(0xFF6200EE))
                             : Text(
-                                'Giriş Yap',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2A9D9D),
-                                ),
-                              ),
+                          'Giriş Yap',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF6200EE),
+                          ),
+                        ),
                       ),
                     ),
 
@@ -419,7 +419,7 @@ class _LoginPageState extends State<LoginPage> {
                               child: Text(
                                 'Kaydol',
                                 style: TextStyle(
-                                  color: Color(0xFF2A9D9D),
+                                  color: Color(0xFF6200EE),
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
