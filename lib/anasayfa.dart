@@ -14,6 +14,41 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+class Randevu {
+  final String id;
+  final String doktorAdi;
+  final String hastaneAdi;
+  final String randevuTuru;
+  final DateTime tarih;
+  final String saat;
+  final String notlar;
+  final DateTime fullDateTime;
+
+  Randevu({
+    required this.id,
+    required this.doktorAdi,
+    required this.hastaneAdi,
+    required this.randevuTuru,
+    required this.tarih,
+    required this.saat,
+    required this.notlar,
+    required this.fullDateTime,
+  });
+}
+
+//besin için veri alımı
+class Besin {
+  final int toplamKarbonhidrat;
+  final int toplamYag;
+  final int toplamProtein;
+
+  Besin({
+    required this.toplamKarbonhidrat,
+    required this.toplamYag,
+    required this.toplamProtein,
+  });
+}
+
 class _HomeScreenState extends State<HomeScreen> {
   bool showFastingCard = false;
   bool showPostprandialCard = false;
@@ -38,6 +73,9 @@ class _HomeScreenState extends State<HomeScreen> {
   double _totalCalories = 0;
   double _totalSeconds = 0;
   double waterLevel = 0.0;
+  int toplamProtein = 0;
+  int toplamYag = 0;
+  int toplamKarbonhidrat = 0;
 
   // Grafik verileri
   List<Map<String, dynamic>> _chartData = [];
@@ -51,6 +89,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadChartData();
     _fetchTodayTotals();
     loadWaterLevel();
+    _startCountdownTimer();
+    _getNutritionData();
 
     // Her 5 saniyede bir verileri güncelle
     Timer.periodic(Duration(seconds: 5), (timer) {
@@ -58,6 +98,39 @@ class _HomeScreenState extends State<HomeScreen> {
         _fetchTodayTotals();
       }
     });
+  }
+
+  void _startCountdownTimer() {
+    Future.delayed(Duration(seconds: 60), () {
+      if (mounted) {
+        _updateCountdownText();
+        _startCountdownTimer(); // Özyinelemeli çağrı
+      }
+    });
+  }
+
+  int _toplamProtein = 0;
+  int _toplamKarbonhidrat = 0;
+  int _toplamYag = 0;
+
+  Future<void> _getNutritionData() async {
+    final bugun = DateTime.now();
+    final tarihKey =
+        "${bugun.year}-${bugun.month.toString().padLeft(2, '0')}-${bugun.day.toString().padLeft(2, '0')}";
+
+    final doc = await FirebaseFirestore.instance
+        .collection('gunluk_beslenme')
+        .doc(tarihKey)
+        .get();
+
+    if (doc.exists) {
+      final data = doc.data()!;
+      setState(() {
+        _toplamProtein = data['toplam_protein'] ?? 0;
+        _toplamKarbonhidrat = data['toplam_karbonhidrat'] ?? 0;
+        _toplamYag = data['toplam_yag'] ?? 0;
+      });
+    }
   }
 
   Future<void> loadWaterLevel() async {
@@ -100,50 +173,67 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isRandevuLoading = true;
     });
-
     try {
       final DateTime now = DateTime.now();
-
       final QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('randevular')
-          .where('tarih', isGreaterThanOrEqualTo: Timestamp.fromDate(now))
           .orderBy('tarih', descending: false)
-          .limit(1)
           .get();
-
-      if (snapshot.docs.isNotEmpty) {
-        final doc = snapshot.docs.first;
+      // Şimdi tarih ve saat birlikte değerlendirerek en yakın randevuyu bulalım
+      Randevu? nextAppointment;
+      for (final doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
-
         final Timestamp tarihTimestamp = data['tarih'] as Timestamp;
         final DateTime tarih = tarihTimestamp.toDate();
-        final String randevuSaat = data['saat'] ?? '';
-
-        setState(() {
+        final String saat = data['saat'] ?? '';
+        // Saat bilgisini ayrıştır
+        DateTime fullDateTime = tarih;
+        if (saat.isNotEmpty) {
+          final List<String> saatParts = saat.split(':');
+          if (saatParts.length == 2) {
+            try {
+              final int hour = int.parse(saatParts[0]);
+              final int minute = int.parse(saatParts[1]);
+              fullDateTime =
+                  DateTime(tarih.year, tarih.month, tarih.day, hour, minute);
+            } catch (e) {
+              print('Saat ayrıştırma hatası: $e');
+            }
+          }
+        }
+        // Şu anki zamanı geçmiş randevuları atla
+        if (fullDateTime.isAfter(now)) {
+          // Bir sonraki randevu olarak belirle
+          nextAppointment = Randevu(
+            id: doc.id,
+            doktorAdi: data['doktorAdi'] ?? '',
+            hastaneAdi: data['hastaneAdi'] ?? '',
+            randevuTuru: data['randevuTuru'] ?? '',
+            tarih: tarih,
+            saat: saat,
+            notlar: data['notlar'] ?? '',
+            fullDateTime: fullDateTime,
+          );
+          break; // İlk gelecek randevu bulunduğunda döngüden çık
+        }
+      }
+      setState(() {
+        if (nextAppointment != null) {
           _randevuFound = true;
-          _doktorAdi = data['doktorAdi'] ?? '';
-          _hastaneAdi = data['hastaneAdi'] ?? '';
-          _randevuTuru = data['randevuTuru'] ?? '';
-          _randevuTarih = DateFormat('dd MMMM yyyy').format(tarih);
-          _randevuSaat = randevuSaat;
-          _randevuDateTime = tarih; // Randevu datetime'ını saklıyoruz
-
+          _doktorAdi = nextAppointment.doktorAdi;
+          _hastaneAdi = nextAppointment.hastaneAdi;
+          _randevuTuru = nextAppointment.randevuTuru;
+          _randevuTarih =
+              DateFormat('dd MMMM yyyy').format(nextAppointment.tarih);
+          _randevuSaat = nextAppointment.saat;
+          _randevuDateTime = nextAppointment.fullDateTime;
           // Geri sayım metnini oluştur
           _updateCountdownText();
-        });
-
-        // Periyodik olarak geri sayımı güncelle (ama sık olmasın)
-        Future.delayed(Duration(seconds: 30), () {
-          if (mounted) {
-            _updateCountdownText();
-          }
-        });
-      } else {
-        setState(() {
+        } else {
           _randevuFound = false;
           _countdownText = "Yaklaşan randevu yok";
-        });
-      }
+        }
+      });
     } catch (e) {
       print('Randevu getirme hatası: $e');
     } finally {
@@ -155,33 +245,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Geri sayım metnini güncelle
   void _updateCountdownText() {
-    if (_randevuDateTime == null || _randevuSaat == null) return;
-
-    final DateTime randevuTarihi = _randevuDateTime!;
-    final String randevuSaat = _randevuSaat!;
-
-    final List<String> saatParts = randevuSaat.split(':');
-    DateTime randevuDateTime = randevuTarihi;
-
-    if (saatParts.length == 2) {
-      try {
-        final int hour = int.parse(saatParts[0]);
-        final int minute = int.parse(saatParts[1]);
-        randevuDateTime = DateTime(
-          randevuTarihi.year,
-          randevuTarihi.month,
-          randevuTarihi.day,
-          hour,
-          minute,
-        );
-      } catch (e) {
-        print('Saat ayrıştırma hatası: $e');
-      }
-    }
-
+    if (_randevuDateTime == null) return;
     final DateTime now = DateTime.now();
-    final Duration difference = randevuDateTime.difference(now);
-
+    final Duration difference = _randevuDateTime!.difference(now);
     String text;
     if (difference.isNegative) {
       text = "Randevu zamanı geçti";
@@ -189,7 +255,6 @@ class _HomeScreenState extends State<HomeScreen> {
       final int days = difference.inDays;
       final int hours = difference.inHours % 24;
       final int minutes = difference.inMinutes % 60;
-
       if (days > 0) {
         text = "$days gün $hours saat $minutes dk";
       } else if (hours > 0) {
@@ -198,7 +263,6 @@ class _HomeScreenState extends State<HomeScreen> {
         text = "$minutes dk";
       }
     }
-
     setState(() {
       _countdownText = text;
     });
@@ -674,9 +738,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Colors.pinkAccent,
-                            Colors.purpleAccent,
                             Colors.blueAccent,
+                            Colors.purpleAccent,
+                            const Color.fromARGB(255, 139, 153, 160),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(20),
@@ -690,28 +754,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       child: Center(
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.emoji_food_beverage_rounded,
-                              size: 50,
-                              color: Colors.white,
-                            ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Text(
-                                  'besin Takibi',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                        child: _buildNutritionPieChart(
+                            _toplamProtein, _toplamKarbonhidrat, _toplamYag),
                       ),
                     ),
                   ],
@@ -1324,4 +1368,152 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
+}
+
+Widget _buildNutritionPieChart(
+    int toplamProtein, int toplamKarbonhidrat, int toplamYag) {
+  // Toplam besin değerleri
+  final double total =
+      (toplamProtein + toplamKarbonhidrat + toplamYag).toDouble();
+
+  // Eğer hiç veri yoksa basit bir mesaj göster
+  if (total <= 0) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.emoji_food_beverage_rounded,
+              size: 50, color: Colors.white),
+          SizedBox(height: 8),
+          Text(
+            'Bugünkü besin verisi yok',
+            style: TextStyle(color: Colors.white, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  return Row(
+    children: [
+      // Sol tarafta pie chart
+      Expanded(
+        flex: 3,
+        child: SizedBox(
+          height: 100,
+          child: PieChart(
+            PieChartData(
+              sectionsSpace: 2,
+              centerSpaceRadius: 15,
+              sections: [
+                // Protein dilimi
+                PieChartSectionData(
+                  color: const Color.fromARGB(255, 248, 118, 161),
+                  value: toplamProtein.toDouble(),
+                  title: 'P',
+                  radius: 30,
+                  titleStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                // Karbonhidrat dilimi
+                PieChartSectionData(
+                  color: const Color.fromARGB(255, 140, 214, 178),
+                  value: toplamKarbonhidrat.toDouble(),
+                  title: 'K',
+                  radius: 30,
+                  titleStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                // Yağ dilimi
+                PieChartSectionData(
+                  color: Color(0xFFFFC68C),
+                  value: toplamYag.toDouble(),
+                  title: 'Y',
+                  radius: 30,
+                  titleStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+
+      // Sağ tarafta değer listesi
+      Expanded(
+        flex: 2,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  color: const Color.fromARGB(255, 248, 118, 161),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'P: ${toplamProtein}g',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 4),
+            Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  color: const Color.fromARGB(255, 140, 214, 178),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'K: ${toplamKarbonhidrat}g',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 4),
+            Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  color: Color(0xFFFFC68C),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'Y: ${toplamYag}g',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
 }
