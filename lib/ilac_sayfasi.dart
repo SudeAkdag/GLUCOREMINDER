@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gluco_reminder/profil.dart';
 
 class Ilac {
+  String? docId; // <--- BU SATIRI EKLE
   String ad;
   String tur;
   String dozaj;
@@ -13,6 +14,7 @@ class Ilac {
   String not;
 
   Ilac({
+    this.docId, // <--- BURAYA DA EKLE
     required this.ad,
     required this.tur,
     required this.dozaj,
@@ -23,9 +25,10 @@ class Ilac {
     required this.not,
   });
 
-  factory Ilac.fromMap(Map<String, dynamic> map) {
+  factory Ilac.fromMap(Map<String, dynamic> map, String docId) {
     final dynamic saatVerisi = map['saat'];
     return Ilac(
+      docId: docId, // <--- BURAYA DA EKLE
       ad: map['ad'] ?? '',
       tur: map['tur'] ?? '',
       dozaj: map['dozaj'] ?? '',
@@ -38,7 +41,22 @@ class Ilac {
       not: map['not'] ?? '',
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'ad': ad,
+      'tur': tur,
+      'dozaj': dozaj,
+      'miktar': miktar,
+      'zaman': zaman,
+      'saat': saat,
+      'aclikDurumu': aclikDurumu,
+      'not': not,
+      'eklenmeZamani': FieldValue.serverTimestamp(),
+    };
+  }
 }
+
 
 class IlacSayfasi extends StatefulWidget {
   const IlacSayfasi({super.key});
@@ -51,23 +69,24 @@ class _IlacSayfasiState extends State<IlacSayfasi> {
   List<Ilac> ilaclar = [];
 
   @override
-  void initState() {
-    super.initState();
-    verileriGetir();
-  }
+void initState() {
+  super.initState();
+  verileriGetir();
+}
 
-  Future<void> verileriGetir() async {
-    final querySnapshot =
-        await FirebaseFirestore.instance.collection("ilac_verileri").get();
+Future<void> verileriGetir() async {
+  final querySnapshot =
+      await FirebaseFirestore.instance.collection("ilac_verileri").get();
 
-    final List<Ilac> geciciListe = querySnapshot.docs
-        .map((doc) => Ilac.fromMap(doc.data()))
-        .toList();
+  final List<Ilac> geciciListe = querySnapshot.docs
+      .map((doc) => Ilac.fromMap(doc.data(), doc.id)) // 🔁 docId'yi geçiriyoruz
+      .toList();
 
-    setState(() {
-      ilaclar = geciciListe;
-    });
-  }
+  setState(() {
+    ilaclar = geciciListe;
+  });
+}
+
 
   void _ilacEkleOrDuzenle({Ilac? mevcutIlac, int? index}) async {
     final Ilac? yeniIlac = await showModalBottomSheet<Ilac>(
@@ -93,11 +112,30 @@ class _IlacSayfasiState extends State<IlacSayfasi> {
     }
   }
 
-  void _ilacSil(int index) {
-    setState(() {
-      ilaclar.removeAt(index);
-    });
+  Future<void> _ilacSil(int index) async {
+  final ilac = ilaclar[index];
+
+  // Firestore'dan kalıcı olarak sil
+  if (ilac.docId != null) {
+    try {
+      await FirebaseFirestore.instance
+          .collection("ilac_verileri")
+          .doc(ilac.docId)
+          .delete();
+    } catch (e) {
+      debugPrint("Firebase'den silme hatası: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Silme işlemi başarısız: $e")),
+      );
+      return; // Hata varsa devam etme
+    }
   }
+
+  // Listeden çıkar
+  setState(() {
+    ilaclar.removeAt(index);
+  });
+}
 
   void _ilacDetay(Ilac ilac, int index) {
     showDialog(
