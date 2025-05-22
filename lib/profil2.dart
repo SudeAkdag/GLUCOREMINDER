@@ -24,6 +24,40 @@ class _ProfilState extends State<Profil> {
   String diabetesType = 'Tip I';
 
   @override
+  void initState() {
+    super.initState();
+    _loadProfileFromFirestore();
+  }
+
+  Future<void> _loadProfileFromFirestore() async {
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('profil_verileri')
+          .orderBy('eklenme_zamani', descending: true)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        var data = snapshot.docs.first.data() as Map<String, dynamic>;
+
+        setState(() {
+          _controllers['name']!.text = data['ad_soyad'] ?? '';
+          _controllers['birthDate']!.text = data['dogum_tarihi'] ?? '';
+          gender = data['cinsiyet'] ?? 'Kadın';
+          _controllers['height']!.text = data['boy'] ?? '';
+          _controllers['weight']!.text = data['kilo'] ?? '';
+          diabetesType = data['diyabet_tipi'] ?? 'Tip I';
+          _controllers['emergency']!.text = data['acil_durum'] ?? '';
+          _controllers['blood']!.text = data['kan_grubu'] ?? '';
+          _controllers['contact']!.text = data['iletisim'] ?? '';
+        });
+      }
+    } catch (e) {
+      debugPrint('Profil yüklenemedi: $e');
+    }
+  }
+
+  @override
   void dispose() {
     for (var controller in _controllers.values) {
       controller.dispose();
@@ -104,7 +138,6 @@ class _ProfilState extends State<Profil> {
               _buildTextField('Kan Grubu', _controllers['blood']!, icon: Icons.invert_colors_outlined),
               _buildTextField('İletişim Bilgisi', _controllers['contact']!, icon: Icons.phone_outlined),
               const SizedBox(height: 28),
-
               ElevatedButton.icon(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {

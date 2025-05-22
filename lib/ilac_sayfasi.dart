@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gluco_reminder/profil.dart';
 
 class Ilac {
-  String? docId; // <--- BU SATIRI EKLE
+  String? docId; 
   String ad;
   String tur;
   String dozaj;
@@ -14,7 +14,7 @@ class Ilac {
   String not;
 
   Ilac({
-    this.docId, // <--- BURAYA DA EKLE
+    this.docId, 
     required this.ad,
     required this.tur,
     required this.dozaj,
