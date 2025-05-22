@@ -216,7 +216,7 @@ Future<void> verileriGetir() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDEEF8),
+      backgroundColor: const Color.fromARGB(255, 249, 246, 248),
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 244, 219, 225),
         foregroundColor: const Color.fromARGB(255, 177, 64, 103),
