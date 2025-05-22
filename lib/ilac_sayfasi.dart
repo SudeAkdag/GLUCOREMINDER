@@ -572,51 +572,69 @@ class _IlacFormState extends State<IlacForm> {
   }
 
   Widget _buildTextField(String label, TextEditingController controller) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: const Icon(Icons.edit_note),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-        filled: true,
-        fillColor: const Color(0xFFF3EEF9),
-      ),
-      validator: (value) =>
-          value == null || value.isEmpty ? "$label boş bırakılamaz" : null,
-    );
-  }
+  return TextFormField(
+    controller: controller,
+    decoration: InputDecoration(
+      labelText: label,
+      prefixIcon: const Icon(Icons.edit_note),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+      filled: true,
+      fillColor: const Color(0xFFF3EEF9),
+    ),
+    validator: (value) =>
+        value == null || value.isEmpty ? "$label boş bırakılamaz" : null,
+  );
+}
 
-  Widget _buildDropdown(String label, List<String> items, String? selectedValue,
-      ValueChanged<String?> onChanged) {
-    return DropdownButtonFormField<String>(
-      value: selectedValue,
-      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: const Icon(Icons.arrow_drop_down_circle_outlined),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-        filled: true,
-        fillColor: const Color(0xFFF3EEF9),
-      ),
-    );
-  }
+Widget _buildDropdown(
+  String label,
+  List<String> items,
+  String? selectedValue,
+  ValueChanged<String?> onChanged,
+) {
+  final uniqueItems = items.toSet().toList();
 
-  Widget _buildDropdownInt(String label, List<int> items, int selectedValue,
-      ValueChanged<int?> onChanged) {
-    return DropdownButtonFormField<int>(
-      value: selectedValue,
-      items: items
-          .map((item) => DropdownMenuItem(value: item, child: Text("$item kez")))
-          .toList(),
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: const Icon(Icons.repeat_rounded),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-        filled: true,
-        fillColor: const Color(0xFFF3EEF9),
-      ),
-    );
-  }
+  return DropdownButtonFormField<String>(
+    value: uniqueItems.contains(selectedValue) ? selectedValue : null,
+    items: uniqueItems
+        .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+        .toList(),
+    onChanged: onChanged,
+    decoration: InputDecoration(
+      labelText: label,
+      prefixIcon: const Icon(Icons.arrow_drop_down_circle_outlined),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+      filled: true,
+      fillColor: const Color(0xFFF3EEF9),
+    ),
+    validator: (value) =>
+        value == null || value.isEmpty ? "$label seçilmelidir" : null,
+  );
+}
+
+Widget _buildDropdownInt(
+  String label,
+  List<int> items,
+  int? selectedValue,
+  ValueChanged<int?> onChanged,
+) {
+  final uniqueItems = items.toSet().toList();
+
+  return DropdownButtonFormField<int>(
+    value: uniqueItems.contains(selectedValue) ? selectedValue : null,
+    items: uniqueItems
+        .map((item) =>
+            DropdownMenuItem(value: item, child: Text("$item kez")))
+        .toList(),
+    onChanged: onChanged,
+    decoration: InputDecoration(
+      labelText: label,
+      prefixIcon: const Icon(Icons.repeat_rounded),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+      filled: true,
+      fillColor: const Color(0xFFF3EEF9),
+    ),
+    validator: (value) => value == null ? "$label seçilmelidir" : null,
+  );
+}
 }
