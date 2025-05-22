@@ -471,7 +471,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: _isLoading
                             ? CircularProgressIndicator(color: Color(0xFFE91E63))
                             : Text(
-                          'Kaydol',
+                          'Devam et',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
