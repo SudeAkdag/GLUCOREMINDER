@@ -174,7 +174,7 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     _animationController.forward();
 
     tarifleriGetir();
-    besinleriYukle();
+    _gunlukBeslenmeKontrol();
   }
 
   @override
@@ -268,21 +268,10 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
 // Besin eklendiğinde kalori ve besin değerlerini güncelleme
   Future<void> besinEkle(String ogunTipi, String isim, int kalori, int protein, int yag, int karbonhidrat, String? resimUrl) async {
     try {
-      // Önce Firebase'e veri ekle ve dönen document reference'ı al
-      DocumentReference docRef = await FirebaseFirestore.instance
-          .collection('besin_degerleri')
-          .add({
-        "isim": isim,
-        "kalori": kalori,
-        "protein": protein,
-        "yag": yag,
-        "karbonhidrat": karbonhidrat,
-        "resimUrl": resimUrl,
-        "ogunTipi": ogunTipi, // Bu alanı da ekleyelim ki daha sonra sorgu yapabilelim
-        "eklemeTarihi": FieldValue.serverTimestamp(), // Tarih bilgisi de ekleyelim
-      });
+      final bugun = DateTime.now();
+      final tarihKey = "${bugun.year}-${bugun.month.toString().padLeft(2, '0')}-${bugun.day.toString().padLeft(2, '0')}";
 
-      // Firebase'den dönen gerçek document ID'sini kullanarak yerel nesneyi oluştur
+      // Create new food item
       final yeniBesin = SeciliBesin(
         isim: isim,
         kalori: kalori,
@@ -290,10 +279,10 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
         yag: yag,
         karbonhidrat: karbonhidrat,
         resimUrl: resimUrl,
-        id: docRef.id, // Firebase'den dönen gerçek ID'yi kullan
+        id: DateTime.now().millisecondsSinceEpoch.toString(), // Generate unique ID
       );
 
-      // Öğün tipine göre listeye ekle
+      // Add to appropriate meal list locally
       setState(() {
         if (ogunTipi == 'Kahvaltı') {
           kahvaltiBesinler.add(yeniBesin);
@@ -307,20 +296,18 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
         _toplamDegerleriHesapla();
       });
 
-      // Kullanıcıya geri bildirim göster
+      // Save to Firebase
+      await _gunlukBesinleriKaydet(tarihKey);
+
+      // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$isim $ogunTipi öğününüze eklendi'),
           behavior: SnackBarBehavior.floating,
-          action: SnackBarAction(
-            label: 'Tamam',
-            onPressed: () {},
-          ),
         ),
       );
 
     } catch (e) {
-      // Hata durumunda kullanıcıya bilgi ver
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Besin eklenirken hata oluştu: $e'),
@@ -332,16 +319,78 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     }
   }
 
+// Save daily nutrition data to Firebase
+  Future<void> _gunlukBesinleriKaydet(String tarihKey) async {
+    try {
+      final docRef = FirebaseFirestore.instance.collection('gunluk_beslenme').doc(tarihKey);
+
+      // Convert meal lists to maps for Firebase storage
+      List<Map<String, dynamic>> kahvaltiData = kahvaltiBesinler.map((besin) => {
+        'id': besin.id,
+        'isim': besin.isim,
+        'kalori': besin.kalori,
+        'protein': besin.protein,
+        'yag': besin.yag,
+        'karbonhidrat': besin.karbonhidrat,
+        'resimUrl': besin.resimUrl,
+      }).toList();
+
+      List<Map<String, dynamic>> ogleData = ogleYemegiBesinler.map((besin) => {
+        'id': besin.id,
+        'isim': besin.isim,
+        'kalori': besin.kalori,
+        'protein': besin.protein,
+        'yag': besin.yag,
+        'karbonhidrat': besin.karbonhidrat,
+        'resimUrl': besin.resimUrl,
+      }).toList();
+
+      List<Map<String, dynamic>> aksamData = aksamYemegiBesinler.map((besin) => {
+        'id': besin.id,
+        'isim': besin.isim,
+        'kalori': besin.kalori,
+        'protein': besin.protein,
+        'yag': besin.yag,
+        'karbonhidrat': besin.karbonhidrat,
+        'resimUrl': besin.resimUrl,
+      }).toList();
+
+      List<Map<String, dynamic>> atistirmalikData = atistirmalikBesinler.map((besin) => {
+        'id': besin.id,
+        'isim': besin.isim,
+        'kalori': besin.kalori,
+        'protein': besin.protein,
+        'yag': besin.yag,
+        'karbonhidrat': besin.karbonhidrat,
+        'resimUrl': besin.resimUrl,
+      }).toList();
+
+      await docRef.set({
+        'tarih': tarihKey,
+        'toplam_kalori': toplamKalori,
+        'toplam_protein': toplamProtein,
+        'toplam_yag': toplamYag,
+        'toplam_karbonhidrat': toplamKarbonhidrat,
+        'hedef_kalori': hedefKalori,
+        'kahvalti': kahvaltiData,
+        'ogle_yemegi': ogleData,
+        'aksam_yemegi': aksamData,
+        'atistirmalik': atistirmalikData,
+        'guncelleme_tarihi': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+    } catch (e) {
+      print('Günlük besinler kaydedilirken hata: $e');
+    }
+  }
+
 // Besin silme fonksiyonu
   void besinSil(String ogunTipi, String besinId) async {
     try {
-      // Önce Firebase'den sil
-      await FirebaseFirestore.instance
-          .collection('besin_degerleri')
-          .doc(besinId)
-          .delete();
+      final bugun = DateTime.now();
+      final tarihKey = "${bugun.year}-${bugun.month.toString().padLeft(2, '0')}-${bugun.day.toString().padLeft(2, '0')}";
 
-      // Silme işlemi başarılı olursa yerel listeden de sil
+      // Remove from local list
       setState(() {
         if (ogunTipi == 'Kahvaltı') {
           kahvaltiBesinler.removeWhere((besin) => besin.id == besinId);
@@ -352,12 +401,12 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
         } else if (ogunTipi == 'Atıştırmalık') {
           atistirmalikBesinler.removeWhere((besin) => besin.id == besinId);
         }
-
-        // Toplam değerleri yeniden hesapla
         _toplamDegerleriHesapla();
       });
 
-      // Kullanıcıya geri bildirim göster
+      // Save updated data to Firebase
+      await _gunlukBesinleriKaydet(tarihKey);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Besin başarıyla silindi'),
@@ -367,7 +416,6 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
       );
 
     } catch (e) {
-      // Hata durumunda kullanıcıya bilgi ver
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Besin silinirken hata oluştu: $e'),
@@ -379,52 +427,173 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     }
   }
 
-  // Firebase'den mevcut besinleri yükleyen fonksiyon
-  Future<void> besinleriYukle() async {
+// Load last 7 days nutrition data for charts (similar to walking page)
+  Future<void> _loadLast7DaysNutrition() async {
     try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('besin_degerleri')
-          .orderBy('eklemeTarihi', descending: true)
-          .get();
+      final now = DateTime.now();
+      List<String> last7Days = [];
+      List<int> last7Calories = [];
 
-      // Listeleri temizle
-      kahvaltiBesinler.clear();
-      ogleYemegiBesinler.clear();
-      aksamYemegiBesinler.clear();
-      atistirmalikBesinler.clear();
+      for (int i = 6; i >= 0; i--) {
+        final date = now.subtract(Duration(days: i));
+        final dateKey = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
 
-      // Firebase'den gelen verileri işle
-      for (var doc in snapshot.docs) {
-        var data = doc.data() as Map<String, dynamic>;
+        final doc = await FirebaseFirestore.instance
+            .collection('gunluk_beslenme')
+            .doc(dateKey)
+            .get();
 
-        SeciliBesin besin = SeciliBesin(
-          id: doc.id, // Firebase document ID'sini kullan
-          isim: data['isim'] ?? '',
-          kalori: data['kalori'] ?? 0,
-          protein: data['protein'] ?? 0,
-          yag: data['yag'] ?? 0,
-          karbonhidrat: data['karbonhidrat'] ?? 0,
-          resimUrl: data['resimUrl'],
-        );
-
-        // Öğün tipine göre ilgili listeye ekle
-        String ogunTipi = data['ogunTipi'] ?? '';
-        if (ogunTipi == 'Kahvaltı') {
-          kahvaltiBesinler.add(besin);
-        } else if (ogunTipi == 'Öğle Yemeği') {
-          ogleYemegiBesinler.add(besin);
-        } else if (ogunTipi == 'Akşam Yemeği') {
-          aksamYemegiBesinler.add(besin);
-        } else if (ogunTipi == 'Atıştırmalık') {
-          atistirmalikBesinler.add(besin);
+        if (doc.exists) {
+          final data = doc.data()!;
+          last7Calories.add(data['toplam_kalori'] ?? 0);
+        } else {
+          last7Calories.add(0);
         }
+
+        // Add day name
+        const days = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+        last7Days.add(days[date.weekday - 1]);
       }
 
-      // Toplam değerleri hesapla
-      _toplamDegerleriHesapla();
+      // You can use this data for charts similar to the walking page
+      // setState(() {
+      //   last7CaloriesData = last7Calories;
+      //   last7DaysNames = last7Days;
+      // });
 
     } catch (e) {
-      print('Besinler yüklenirken hata: $e');
+      print('Son 7 günlük beslenme verisi yüklenirken hata: $e');
+    }
+  }
+
+// Initialize the page - call this in initState()
+  void initializePage() {
+    _gunlukBeslenmeKontrol();
+    _loadLast7DaysNutrition();
+  }
+
+// Method to reset daily nutrition (useful for testing or manual reset)
+  Future<void> _gunlukBeslenmeSifirla() async {
+    try {
+      final bugun = DateTime.now();
+      final tarihKey = "${bugun.year}-${bugun.month.toString().padLeft(2, '0')}-${bugun.day.toString().padLeft(2, '0')}";
+
+      setState(() {
+        kahvaltiBesinler.clear();
+        ogleYemegiBesinler.clear();
+        aksamYemegiBesinler.clear();
+        atistirmalikBesinler.clear();
+        toplamKalori = 0;
+        toplamProtein = 0;
+        toplamYag = 0;
+        toplamKarbonhidrat = 0;
+      });
+
+      await _gunlukBesinleriKaydet(tarihKey);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Günlük beslenme verileri sıfırlandı'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      print('Günlük beslenme sıfırlanırken hata: $e');
+    }
+  }
+
+  // Daily nutrition data initialization - similar to _kontrolVeSifirla
+  Future<void> _gunlukBeslenmeKontrol() async {
+    final bugun = DateTime.now();
+    final tarihKey = "${bugun.year}-${bugun.month.toString().padLeft(2, '0')}-${bugun.day.toString().padLeft(2, '0')}";
+
+    final docRef = FirebaseFirestore.instance.collection('gunluk_beslenme').doc(tarihKey);
+    final doc = await docRef.get();
+
+    if (!doc.exists) {
+      // If no data exists for today, create fresh document
+      await docRef.set({
+        'tarih': tarihKey,
+        'toplam_kalori': 0,
+        'toplam_protein': 0,
+        'toplam_yag': 0,
+        'toplam_karbonhidrat': 0,
+        'hedef_kalori': hedefKalori,
+        'kahvalti': [],
+        'ogle_yemegi': [],
+        'aksam_yemegi': [],
+        'atistirmalik': [],
+        'olusturma_tarihi': FieldValue.serverTimestamp(),
+      });
+
+      // Reset all local data
+      setState(() {
+        kahvaltiBesinler.clear();
+        ogleYemegiBesinler.clear();
+        aksamYemegiBesinler.clear();
+        atistirmalikBesinler.clear();
+        toplamKalori = 0;
+        toplamProtein = 0;
+        toplamYag = 0;
+        toplamKarbonhidrat = 0;
+      });
+    } else {
+      // Load existing data for today
+      await _gunlukBesinleriYukle(tarihKey);
+    }
+  }
+
+// Load daily nutrition data
+  Future<void> _gunlukBesinleriYukle(String tarihKey) async {
+    try {
+      final docRef = FirebaseFirestore.instance.collection('gunluk_beslenme').doc(tarihKey);
+      final doc = await docRef.get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+
+        // Clear existing lists
+        kahvaltiBesinler.clear();
+        ogleYemegiBesinler.clear();
+        aksamYemegiBesinler.clear();
+        atistirmalikBesinler.clear();
+
+        // Load each meal's foods
+        _loadMealFoods(data['kahvalti'], kahvaltiBesinler);
+        _loadMealFoods(data['ogle_yemegi'], ogleYemegiBesinler);
+        _loadMealFoods(data['aksam_yemegi'], aksamYemegiBesinler);
+        _loadMealFoods(data['atistirmalik'], atistirmalikBesinler);
+
+        // Load totals
+        toplamKalori = data['toplam_kalori'] ?? 0;
+        toplamProtein = data['toplam_protein'] ?? 0;
+        toplamYag = data['toplam_yag'] ?? 0;
+        toplamKarbonhidrat = data['toplam_karbonhidrat'] ?? 0;
+        hedefKalori = data['hedef_kalori'] ?? 2000;
+
+        setState(() {});
+      }
+    } catch (e) {
+      print('Günlük besinler yüklenirken hata: $e');
+    }
+  }
+
+// Helper method to load meal foods from Firebase data
+  void _loadMealFoods(dynamic mealData, List<SeciliBesin> mealList) {
+    if (mealData is List) {
+      for (var foodData in mealData) {
+        if (foodData is Map<String, dynamic>) {
+          mealList.add(SeciliBesin(
+            id: foodData['id'] ?? '',
+            isim: foodData['isim'] ?? '',
+            kalori: foodData['kalori'] ?? 0,
+            protein: foodData['protein'] ?? 0,
+            yag: foodData['yag'] ?? 0,
+            karbonhidrat: foodData['karbonhidrat'] ?? 0,
+            resimUrl: foodData['resimUrl'],
+          ));
+        }
+      }
     }
   }
 
