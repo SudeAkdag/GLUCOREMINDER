@@ -36,6 +36,19 @@ class Randevu {
   });
 }
 
+//besin için veri alımı
+class Besin {
+  final int toplamKarbonhidrat;
+  final int toplamYag;
+  final int toplamProtein;
+
+  Besin({
+    required this.toplamKarbonhidrat,
+    required this.toplamYag,
+    required this.toplamProtein,
+  });
+}
+
 class _HomeScreenState extends State<HomeScreen> {
   bool showFastingCard = false;
   bool showPostprandialCard = false;
@@ -60,6 +73,9 @@ class _HomeScreenState extends State<HomeScreen> {
   double _totalCalories = 0;
   double _totalSeconds = 0;
   double waterLevel = 0.0;
+  int toplamProtein = 0;
+  int toplamYag = 0;
+  int toplamKarbonhidrat = 0;
 
   // Grafik verileri
   List<Map<String, dynamic>> _chartData = [];
@@ -74,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchTodayTotals();
     loadWaterLevel();
     _startCountdownTimer();
+    _getNutritionData();
 
     // Her 5 saniyede bir verileri güncelle
     Timer.periodic(Duration(seconds: 5), (timer) {
@@ -90,6 +107,30 @@ class _HomeScreenState extends State<HomeScreen> {
         _startCountdownTimer(); // Özyinelemeli çağrı
       }
     });
+  }
+
+  int _toplamProtein = 0;
+  int _toplamKarbonhidrat = 0;
+  int _toplamYag = 0;
+
+  Future<void> _getNutritionData() async {
+    final bugun = DateTime.now();
+    final tarihKey =
+        "${bugun.year}-${bugun.month.toString().padLeft(2, '0')}-${bugun.day.toString().padLeft(2, '0')}";
+
+    final doc = await FirebaseFirestore.instance
+        .collection('gunluk_beslenme')
+        .doc(tarihKey)
+        .get();
+
+    if (doc.exists) {
+      final data = doc.data()!;
+      setState(() {
+        _toplamProtein = data['toplam_protein'] ?? 0;
+        _toplamKarbonhidrat = data['toplam_karbonhidrat'] ?? 0;
+        _toplamYag = data['toplam_yag'] ?? 0;
+      });
+    }
   }
 
   Future<void> loadWaterLevel() async {
@@ -127,7 +168,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Yaklaşan randevuyu tek seferde yükle
   // Yaklaşan randevuyu tek seferde yükle
   Future<void> _loadNextAppointment() async {
     setState(() {
@@ -203,7 +243,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Geri sayım metnini güncelle
   // Geri sayım metnini güncelle
   void _updateCountdownText() {
     if (_randevuDateTime == null) return;
@@ -699,9 +738,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Colors.pinkAccent,
-                            Colors.purpleAccent,
                             Colors.blueAccent,
+                            Colors.purpleAccent,
+                            const Color.fromARGB(255, 139, 153, 160),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(20),
@@ -715,28 +754,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       child: Center(
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.emoji_food_beverage_rounded,
-                              size: 50,
-                              color: Colors.white,
-                            ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Text(
-                                  'besin Takibi',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                        child: _buildNutritionPieChart(
+                            _toplamProtein, _toplamKarbonhidrat, _toplamYag),
                       ),
                     ),
                   ],
@@ -1349,4 +1368,152 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
+}
+
+Widget _buildNutritionPieChart(
+    int toplamProtein, int toplamKarbonhidrat, int toplamYag) {
+  // Toplam besin değerleri
+  final double total =
+      (toplamProtein + toplamKarbonhidrat + toplamYag).toDouble();
+
+  // Eğer hiç veri yoksa basit bir mesaj göster
+  if (total <= 0) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.emoji_food_beverage_rounded,
+              size: 50, color: Colors.white),
+          SizedBox(height: 8),
+          Text(
+            'Bugünkü besin verisi yok',
+            style: TextStyle(color: Colors.white, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  return Row(
+    children: [
+      // Sol tarafta pie chart
+      Expanded(
+        flex: 3,
+        child: SizedBox(
+          height: 100,
+          child: PieChart(
+            PieChartData(
+              sectionsSpace: 2,
+              centerSpaceRadius: 15,
+              sections: [
+                // Protein dilimi
+                PieChartSectionData(
+                  color: const Color.fromARGB(255, 248, 118, 161),
+                  value: toplamProtein.toDouble(),
+                  title: 'P',
+                  radius: 30,
+                  titleStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                // Karbonhidrat dilimi
+                PieChartSectionData(
+                  color: const Color.fromARGB(255, 140, 214, 178),
+                  value: toplamKarbonhidrat.toDouble(),
+                  title: 'K',
+                  radius: 30,
+                  titleStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                // Yağ dilimi
+                PieChartSectionData(
+                  color: Color(0xFFFFC68C),
+                  value: toplamYag.toDouble(),
+                  title: 'Y',
+                  radius: 30,
+                  titleStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+
+      // Sağ tarafta değer listesi
+      Expanded(
+        flex: 2,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  color: const Color.fromARGB(255, 248, 118, 161),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'P: ${toplamProtein}g',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 4),
+            Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  color: const Color.fromARGB(255, 140, 214, 178),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'K: ${toplamKarbonhidrat}g',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 4),
+            Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  color: Color(0xFFFFC68C),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'Y: ${toplamYag}g',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
 }
