@@ -1,11 +1,17 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:gluco_reminder/profil.dart';
 import 'package:gluco_reminder/besinler.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gluco_reminder/firebase_options.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(MyApp());
 }
 
@@ -168,6 +174,7 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     _animationController.forward();
 
     tarifleriGetir();
+    besinleriYukle();
   }
 
   @override
@@ -258,10 +265,24 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
     }
   }
 
-  // Besin eklendiğinde kalori ve besin değerlerini güncelleme
-  void besinEkle(String ogunTipi, String isim, int kalori, int protein, int yag, int karbonhidrat, String? resimUrl) {
-    setState(() {
-      // Yeni besini ekle
+// Besin eklendiğinde kalori ve besin değerlerini güncelleme
+  Future<void> besinEkle(String ogunTipi, String isim, int kalori, int protein, int yag, int karbonhidrat, String? resimUrl) async {
+    try {
+      // Önce Firebase'e veri ekle ve dönen document reference'ı al
+      DocumentReference docRef = await FirebaseFirestore.instance
+          .collection('besin_degerleri')
+          .add({
+        "isim": isim,
+        "kalori": kalori,
+        "protein": protein,
+        "yag": yag,
+        "karbonhidrat": karbonhidrat,
+        "resimUrl": resimUrl,
+        "ogunTipi": ogunTipi, // Bu alanı da ekleyelim ki daha sonra sorgu yapabilelim
+        "eklemeTarihi": FieldValue.serverTimestamp(), // Tarih bilgisi de ekleyelim
+      });
+
+      // Firebase'den dönen gerçek document ID'sini kullanarak yerel nesneyi oluştur
       final yeniBesin = SeciliBesin(
         isim: isim,
         kalori: kalori,
@@ -269,53 +290,142 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
         yag: yag,
         karbonhidrat: karbonhidrat,
         resimUrl: resimUrl,
-        id: DateTime.now().millisecondsSinceEpoch.toString(), // Unique ID
+        id: docRef.id, // Firebase'den dönen gerçek ID'yi kullan
       );
 
       // Öğün tipine göre listeye ekle
-      if (ogunTipi == 'Kahvaltı') {
-        kahvaltiBesinler.add(yeniBesin);
-      } else if (ogunTipi == 'Öğle Yemeği') {
-        ogleYemegiBesinler.add(yeniBesin);
-      } else if (ogunTipi == 'Akşam Yemeği') {
-        aksamYemegiBesinler.add(yeniBesin);
-      } else if (ogunTipi == 'Atıştırmalık') {
-        atistirmalikBesinler.add(yeniBesin);
-      }
+      setState(() {
+        if (ogunTipi == 'Kahvaltı') {
+          kahvaltiBesinler.add(yeniBesin);
+        } else if (ogunTipi == 'Öğle Yemeği') {
+          ogleYemegiBesinler.add(yeniBesin);
+        } else if (ogunTipi == 'Akşam Yemeği') {
+          aksamYemegiBesinler.add(yeniBesin);
+        } else if (ogunTipi == 'Atıştırmalık') {
+          atistirmalikBesinler.add(yeniBesin);
+        }
+        _toplamDegerleriHesapla();
+      });
 
-      // Toplam değerleri yeniden hesapla
-      _toplamDegerleriHesapla();
-    });
-
-    // Kullanıcıya geri bildirim göster
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$isim $ogunTipi öğününüze eklendi'),
-        behavior: SnackBarBehavior.floating,
-        action: SnackBarAction(
-          label: 'Tamam',
-          onPressed: () {},
+      // Kullanıcıya geri bildirim göster
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$isim $ogunTipi öğününüze eklendi'),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'Tamam',
+            onPressed: () {},
+          ),
         ),
-      ),
-    );
+      );
+
+    } catch (e) {
+      // Hata durumunda kullanıcıya bilgi ver
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Besin eklenirken hata oluştu: $e'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+        ),
+      );
+      print('Besin ekleme hatası: $e');
+    }
   }
 
-  // Besin silme fonksiyonu
-  void besinSil(String ogunTipi, String besinId) {
-    setState(() {
-      if (ogunTipi == 'Kahvaltı') {
-        kahvaltiBesinler.removeWhere((besin) => besin.id == besinId);
-      } else if (ogunTipi == 'Öğle Yemeği') {
-        ogleYemegiBesinler.removeWhere((besin) => besin.id == besinId);
-      } else if (ogunTipi == 'Akşam Yemeği') {
-        aksamYemegiBesinler.removeWhere((besin) => besin.id == besinId);
-      } else if (ogunTipi == 'Atıştırmalık') {
-        atistirmalikBesinler.removeWhere((besin) => besin.id == besinId);
+// Besin silme fonksiyonu
+  void besinSil(String ogunTipi, String besinId) async {
+    try {
+      // Önce Firebase'den sil
+      await FirebaseFirestore.instance
+          .collection('besin_degerleri')
+          .doc(besinId)
+          .delete();
+
+      // Silme işlemi başarılı olursa yerel listeden de sil
+      setState(() {
+        if (ogunTipi == 'Kahvaltı') {
+          kahvaltiBesinler.removeWhere((besin) => besin.id == besinId);
+        } else if (ogunTipi == 'Öğle Yemeği') {
+          ogleYemegiBesinler.removeWhere((besin) => besin.id == besinId);
+        } else if (ogunTipi == 'Akşam Yemeği') {
+          aksamYemegiBesinler.removeWhere((besin) => besin.id == besinId);
+        } else if (ogunTipi == 'Atıştırmalık') {
+          atistirmalikBesinler.removeWhere((besin) => besin.id == besinId);
+        }
+
+        // Toplam değerleri yeniden hesapla
+        _toplamDegerleriHesapla();
+      });
+
+      // Kullanıcıya geri bildirim göster
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Besin başarıyla silindi'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.green,
+        ),
+      );
+
+    } catch (e) {
+      // Hata durumunda kullanıcıya bilgi ver
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Besin silinirken hata oluştu: $e'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+        ),
+      );
+      print('Besin silme hatası: $e');
+    }
+  }
+
+  // Firebase'den mevcut besinleri yükleyen fonksiyon
+  Future<void> besinleriYukle() async {
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('besin_degerleri')
+          .orderBy('eklemeTarihi', descending: true)
+          .get();
+
+      // Listeleri temizle
+      kahvaltiBesinler.clear();
+      ogleYemegiBesinler.clear();
+      aksamYemegiBesinler.clear();
+      atistirmalikBesinler.clear();
+
+      // Firebase'den gelen verileri işle
+      for (var doc in snapshot.docs) {
+        var data = doc.data() as Map<String, dynamic>;
+
+        SeciliBesin besin = SeciliBesin(
+          id: doc.id, // Firebase document ID'sini kullan
+          isim: data['isim'] ?? '',
+          kalori: data['kalori'] ?? 0,
+          protein: data['protein'] ?? 0,
+          yag: data['yag'] ?? 0,
+          karbonhidrat: data['karbonhidrat'] ?? 0,
+          resimUrl: data['resimUrl'],
+        );
+
+        // Öğün tipine göre ilgili listeye ekle
+        String ogunTipi = data['ogunTipi'] ?? '';
+        if (ogunTipi == 'Kahvaltı') {
+          kahvaltiBesinler.add(besin);
+        } else if (ogunTipi == 'Öğle Yemeği') {
+          ogleYemegiBesinler.add(besin);
+        } else if (ogunTipi == 'Akşam Yemeği') {
+          aksamYemegiBesinler.add(besin);
+        } else if (ogunTipi == 'Atıştırmalık') {
+          atistirmalikBesinler.add(besin);
+        }
       }
 
-      // Toplam değerleri yeniden hesapla
+      // Toplam değerleri hesapla
       _toplamDegerleriHesapla();
-    });
+
+    } catch (e) {
+      print('Besinler yüklenirken hata: $e');
+    }
   }
 
   // Öğündeki besinleri gösteren dialog
@@ -409,7 +519,7 @@ class _BeslenmeSayfasiState extends State<BeslenmeSayfasi> with SingleTickerProv
                         subtitle: Text('${besin.kalori} kcal'),
                         trailing: IconButton(
                           icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
+                          onPressed: (){
                             besinSil(ogunTipi, besin.id);
                             Navigator.of(context).pop();
                           },
