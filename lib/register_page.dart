@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gluco_reminder/auth_service.dart';
-import 'package:gluco_reminder/bottom_nav_bar.dart';
+import 'package:gluco_reminder/register_page2.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -43,7 +43,11 @@ class _RegisterPageState extends State<RegisterPage> {
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => BottomNavigationSayfa()),
+            MaterialPageRoute(
+              builder: (context) => RegisterPage2(
+                email: _emailController.text.trim(),
+              ),
+            ),
           );
         }
       } catch (e) {
@@ -93,8 +97,8 @@ class _RegisterPageState extends State<RegisterPage> {
               width: MediaQuery.of(context).size.width,
               constraints: BoxConstraints(
                 minHeight: MediaQuery.of(context).size.height -
-                           MediaQuery.of(context).padding.top -
-                           MediaQuery.of(context).padding.bottom,
+                    MediaQuery.of(context).padding.top -
+                    MediaQuery.of(context).padding.bottom,
               ),
               padding: const EdgeInsets.all(24.0),
               child: Form(
@@ -341,7 +345,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           if (value == null || value.isEmpty) {
                             return 'Şifre gerekli';
                           }
-                          if (value.length < 3) {
+                          if (value.length < 6) {
                             return 'Şifre en az 6 karakter olmalı';
                           }
                           return null;
@@ -467,13 +471,13 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: _isLoading
                             ? CircularProgressIndicator(color: Color(0xFFE91E63))
                             : Text(
-                                'Kaydol',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFE91E63),
-                                ),
-                              ),
+                          'Devam et',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFE91E63),
+                          ),
+                        ),
                       ),
                     ),
 
