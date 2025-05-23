@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class Profil extends StatefulWidget {
   const Profil({super.key});
@@ -31,9 +32,12 @@ class _ProfilState extends State<Profil> {
 
   Future<void> _loadProfileFromFirestore() async {
     try {
+      final userEmail = FirebaseAuth.instance.currentUser?.email;
+      if (userEmail == null) return;
+
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('profil_verileri')
-          .orderBy('eklenme_zamani', descending: true)
+          .where('email', isEqualTo: userEmail)
           .limit(1)
           .get();
 
@@ -43,10 +47,10 @@ class _ProfilState extends State<Profil> {
         setState(() {
           _controllers['name']!.text = data['ad_soyad'] ?? '';
           _controllers['birthDate']!.text = data['dogum_tarihi'] ?? '';
-          gender = data['cinsiyet'] ?? 'Kadın';
+          gender = data['cinsiyet'] ?? gender;
           _controllers['height']!.text = data['boy'] ?? '';
           _controllers['weight']!.text = data['kilo'] ?? '';
-          diabetesType = data['diyabet_tipi'] ?? 'Tip I';
+          diabetesType = data['diyabet_tipi'] ?? diabetesType;
           _controllers['emergency']!.text = data['acil_durum'] ?? '';
           _controllers['blood']!.text = data['kan_grubu'] ?? '';
           _controllers['contact']!.text = data['iletisim'] ?? '';
@@ -73,7 +77,11 @@ class _ProfilState extends State<Profil> {
 
   Future<void> _saveProfileToFirestore() async {
     try {
+      final userEmail = FirebaseAuth.instance.currentUser?.email;
+      if (userEmail == null) return;
+
       await FirebaseFirestore.instance.collection('profil_verileri').add({
+        'email': userEmail,
         'ad_soyad': _controllers['name']!.text,
         'dogum_tarihi': _controllers['birthDate']!.text,
         'cinsiyet': gender,
@@ -83,7 +91,7 @@ class _ProfilState extends State<Profil> {
         'acil_durum': _controllers['emergency']!.text,
         'kan_grubu': _controllers['blood']!.text,
         'iletisim': _controllers['contact']!.text,
-        'eklenme_zamani': FieldValue.serverTimestamp(),
+        'timestamp': FieldValue.serverTimestamp(),
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
