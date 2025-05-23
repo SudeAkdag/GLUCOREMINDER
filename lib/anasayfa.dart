@@ -59,11 +59,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final double minValue = 0;
   final double maxValue = 400;
   final int maxDailyReadings = 3;
-  // İlaç ile ilgili bilgiler
-  String? _ilacAdi;
-  String? _ilacSaati;
-  bool _isIlacLoading = true;
-  bool _ilacFound = false;
 
   // Randevu ile ilgili bilgiler
   String? _doktorAdi;
@@ -96,7 +91,6 @@ class _HomeScreenState extends State<HomeScreen> {
     loadWaterLevel();
     _startCountdownTimer();
     _getNutritionData();
-    _loadNextMedication(); // Yeni ilaç yükleme fonksiyonunu ekleyin
 
     // Her 5 saniyede bir verileri güncelle
     Timer.periodic(Duration(seconds: 5), (timer) {
@@ -118,84 +112,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _toplamProtein = 0;
   int _toplamKarbonhidrat = 0;
   int _toplamYag = 0;
-
-  Future<void> _loadNextMedication() async {
-    setState(() {
-      _isIlacLoading = true;
-    });
-
-    try {
-      final DateTime now = DateTime.now();
-      final QuerySnapshot snapshot =
-          await FirebaseFirestore.instance.collection('ilac_verileri').get();
-
-      // En yakın saatteki ilacı bulalım
-      TimeOfDay? enYakinSaat;
-      String? enYakinIlacAdi;
-      Duration? enKisaFark;
-
-      for (final doc in snapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        final String ilacAdi = data['ad'] ?? '';
-        final List<dynamic> saatler = data['saat'] ?? [];
-
-        // Her ilaç saati için kontrol
-        for (final saatStr in saatler) {
-          // Saat formatını ayrıştır (örn: "9:00 AM")
-          final parts = saatStr.toString().split(' ');
-          final saatDakika = parts[0].split(':');
-          final int hour = int.parse(saatDakika[0]);
-          final int minute = int.parse(saatDakika[1]);
-          final bool isPM = parts.length > 1 && parts[1].toUpperCase() == 'PM';
-
-          // AM/PM formatını 24 saat formatına çevir
-          int hour24 = hour;
-          if (isPM && hour < 12) hour24 += 12;
-          if (!isPM && hour == 12) hour24 = 0;
-
-          // İlaç saati bugün için bir DateTime nesnesi oluştur
-          final ilacZamani =
-              DateTime(now.year, now.month, now.day, hour24, minute);
-
-          // Eğer ilaç saati geçmişse, yarının aynı saatini kontrol et
-          DateTime karsilastirilacakZaman = ilacZamani;
-          if (karsilastirilacakZaman.isBefore(now)) {
-            karsilastirilacakZaman =
-                karsilastirilacakZaman.add(Duration(days: 1));
-          }
-
-          // Fark hesapla
-          final fark = karsilastirilacakZaman.difference(now);
-
-          // İlk ilaç veya daha yakın bir ilaç bulunduysa güncelle
-          if (enKisaFark == null || fark < enKisaFark) {
-            enKisaFark = fark;
-            enYakinIlacAdi = ilacAdi;
-            enYakinSaat = TimeOfDay(hour: hour24, minute: minute);
-          }
-        }
-      }
-
-      setState(() {
-        if (enYakinIlacAdi != null && enYakinSaat != null) {
-          _ilacFound = true;
-          _ilacAdi = enYakinIlacAdi;
-
-          // Saati formatla (24 saat formatında)
-          _ilacSaati =
-              '${enYakinSaat.hour.toString().padLeft(2, '0')}:${enYakinSaat.minute.toString().padLeft(2, '0')}';
-        } else {
-          _ilacFound = false;
-        }
-      });
-    } catch (e) {
-      print('İlaç getirme hatası: $e');
-    } finally {
-      setState(() {
-        _isIlacLoading = false;
-      });
-    }
-  }
 
   Future<void> _getNutritionData() async {
     final bugun = DateTime.now();
@@ -631,7 +547,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Yaklaşan randevu
                 _buildNextAppointmentCard(),
-                _buildMedicationWidget(),
+
                 SizedBox(height: 20),
 
                 Row(
@@ -1084,163 +1000,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildMedicationWidget() {
-    return Center(
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF6200EE),
-              Color(0xFF03DAC6),
-              Color(0xFFBB86FC),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.pink.withOpacity(0.3),
-              spreadRadius: 1,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: _isIlacLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : !_ilacFound
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.medication,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                          SizedBox(width: 10),
-                          Text(
-                            'İlaç Hatırlatıcı Yok',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        'İlaç eklemek için ilaç sayfasını ziyaret edin',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.8),
-                        ),
-                      ),
-                    ],
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.medication_outlined,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                          SizedBox(width: 10),
-                          Text(
-                            'Yaklaşan İlacınız',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 15),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.medical_services_outlined,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            _ilacAdi!,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.access_time,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            _ilacSaati!,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 15),
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.alarm,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'İlacınızı zamanında alınız',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
       ),
     );
   }
