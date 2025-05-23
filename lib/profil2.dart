@@ -12,6 +12,7 @@ class Profil extends StatefulWidget {
 class _ProfilState extends State<Profil> {
   final _formKey = GlobalKey<FormState>();
   final _controllers = <String, TextEditingController>{
+    'email': TextEditingController(),
     'name': TextEditingController(),
     'birthDate': TextEditingController(),
     'height': TextEditingController(),
@@ -23,6 +24,7 @@ class _ProfilState extends State<Profil> {
 
   String gender = 'Kadın';
   String diabetesType = 'Tip I';
+  String? documentId;
 
   @override
   void initState() {
@@ -35,6 +37,8 @@ class _ProfilState extends State<Profil> {
       final userEmail = FirebaseAuth.instance.currentUser?.email;
       if (userEmail == null) return;
 
+      _controllers['email']!.text = userEmail;
+
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('profil_verileri')
           .where('email', isEqualTo: userEmail)
@@ -42,7 +46,9 @@ class _ProfilState extends State<Profil> {
           .get();
 
       if (snapshot.docs.isNotEmpty) {
-        var data = snapshot.docs.first.data() as Map<String, dynamic>;
+        var doc = snapshot.docs.first;
+        var data = doc.data() as Map<String, dynamic>;
+        documentId = doc.id;
 
         setState(() {
           _controllers['name']!.text = data['ad_soyad'] ?? '';
@@ -61,26 +67,12 @@ class _ProfilState extends State<Profil> {
     }
   }
 
-  @override
-  void dispose() {
-    for (var controller in _controllers.values) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
-
-  final Color softPink = const Color(0xFFF8E1F4);
-  final Color softPurple = const Color(0xFFD7B3E6);
-  final Color pastelPurple = const Color(0xFFBFA2DB);
-  final Color pastelText = const Color(0xFF6D4C8A);
-  final Color borderColor = const Color(0xFFCEB9DE);
-
   Future<void> _saveProfileToFirestore() async {
     try {
       final userEmail = FirebaseAuth.instance.currentUser?.email;
       if (userEmail == null) return;
 
-      await FirebaseFirestore.instance.collection('profil_verileri').add({
+      final data = {
         'email': userEmail,
         'ad_soyad': _controllers['name']!.text,
         'dogum_tarihi': _controllers['birthDate']!.text,
@@ -92,17 +84,37 @@ class _ProfilState extends State<Profil> {
         'kan_grubu': _controllers['blood']!.text,
         'iletisim': _controllers['contact']!.text,
         'timestamp': FieldValue.serverTimestamp(),
-      });
+      };
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profil kaydedildi')),
-      );
+      if (documentId != null) {
+        await FirebaseFirestore.instance
+            .collection('profil_verileri')
+            .doc(documentId)
+            .update(data);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profil güncellendi')),
+        );
+      } else {
+        final doc = await FirebaseFirestore.instance
+            .collection('profil_verileri')
+            .add(data);
+        documentId = doc.id;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profil oluşturuldu')),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Kayıt sırasında hata: $e')),
       );
     }
   }
+
+  final Color softPink = const Color(0xFFF8E1F4);
+  final Color softPurple = const Color(0xFFD7B3E6);
+  final Color pastelPurple = const Color(0xFFBFA2DB);
+  final Color pastelText = const Color(0xFF6D4C8A);
+  final Color borderColor = const Color(0xFFCEB9DE);
 
   @override
   Widget build(BuildContext context) {
@@ -123,6 +135,7 @@ class _ProfilState extends State<Profil> {
             children: [
               _buildAvatar(),
               const SizedBox(height: 24),
+              _buildTextField('E-posta', _controllers['email']!, icon: Icons.email_outlined, enabled: false),
               _buildTextField('Ad Soyad', _controllers['name']!, icon: Icons.person_outline),
               _buildTextField('Doğum Tarihi', _controllers['birthDate']!, icon: Icons.calendar_today_outlined),
               _buildDropdown('Cinsiyet', gender, ['Kadın', 'Erkek'], (v) {
@@ -205,11 +218,13 @@ class _ProfilState extends State<Profil> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {IconData? icon}) {
+  Widget _buildTextField(String label, TextEditingController controller,
+      {IconData? icon, bool enabled = true}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: TextFormField(
         controller: controller,
+        enabled: enabled,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: icon != null ? Icon(icon, color: pastelText) : null,
@@ -230,7 +245,7 @@ class _ProfilState extends State<Profil> {
         ),
         style: TextStyle(color: pastelText),
         validator: (value) {
-          if (value == null || value.isEmpty) {
+          if (enabled && (value == null || value.isEmpty)) {
             return 'Bu alan boş olamaz';
           }
           return null;
