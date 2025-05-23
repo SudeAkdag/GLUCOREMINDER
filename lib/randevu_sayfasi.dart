@@ -317,21 +317,6 @@ class _RandevuSayfasiState extends State<RandevuSayfasi>
             textAlign: TextAlign.center,
           ),
           SizedBox(height: 16),
-          if (filtre == RandevuFiltre.yaklasan)
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => RandevuEkleme()),
-                );
-              },
-              icon: Icon(Icons.add),
-              label: Text('Yeni Randevu Ekle'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF4FD2D2),
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-            ),
         ],
       ),
     );
@@ -540,7 +525,6 @@ class _RandevuSayfasiState extends State<RandevuSayfasi>
                 ],
               ),
               SizedBox(height: 20),
-
               _buildDetayItem(
                   'Randevu Türü', randevu.randevuTuru, Icons.category),
               SizedBox(height: 12),
@@ -555,43 +539,37 @@ class _RandevuSayfasiState extends State<RandevuSayfasi>
                   Icons.calendar_today),
               SizedBox(height: 12),
               _buildDetayItem('Saat', randevu.saat, Icons.access_time),
-
               if (randevu.notlar.isNotEmpty) ...[
                 SizedBox(height: 12),
                 _buildDetayItem('Notlar', randevu.notlar, Icons.note,
                     alignTop: true),
               ],
-
               SizedBox(height: 24),
-
-              // Sadece gelecek randevular için silme butonu göster
-              if (!isGecmis)
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _showSilOnayDialog(context, randevu.id);
-                    },
-                    icon: Icon(
-                      Icons.delete_outline,
-                      color: Colors.white,
-                    ),
-                    label: Text(
-                      'Randevuyu Sil',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showSilOnayDialog(context, randevu.id);
+                  },
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: Colors.white,
+                  ),
+                  label: Text(
+                    'Randevuyu Sil',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),
-
+              ),
               SizedBox(height: 8),
             ],
           ),
