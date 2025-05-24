@@ -49,6 +49,7 @@ class _BottomNavigationSayfaState extends State<BottomNavigationSayfa> {
 
   @override
   Widget build(BuildContext context) {
+    // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () async {
         // Eğer kullanıcı anasayfada değilse, anasayfaya geri dön

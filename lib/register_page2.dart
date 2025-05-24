@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,9 +8,9 @@ import 'package:gluco_reminder/bottom_nav_bar.dart';
 class PhoneNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue,
-      TextEditingValue newValue,
-      ) {
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     String newText = newValue.text;
 
     // If user tries to delete the leading 0, prevent it
@@ -53,6 +55,7 @@ class _RegisterPage2State extends State<RegisterPage2> {
     // Set initial value for phone number with leading 0
     _iletisimController.text = '0';
   }
+
   final _acilDurumController = TextEditingController();
 
   DateTime? _selectedDate;
@@ -64,7 +67,16 @@ class _RegisterPage2State extends State<RegisterPage2> {
 
   final List<String> _genderOptions = ['Erkek', 'Kadın'];
   final List<String> _diabetesTypes = ['Tip 1', 'Tip 2'];
-  final List<String> _bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'];
+  final List<String> _bloodTypes = [
+    'A+',
+    'A-',
+    'B+',
+    'B-',
+    'AB+',
+    'AB-',
+    '0+',
+    '0-'
+  ];
 
   @override
   void dispose() {
@@ -134,7 +146,8 @@ class _RegisterPage2State extends State<RegisterPage2> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Profil kaydedilirken hata oluştu: ${e.toString()}'),
+              content:
+                  Text('Profil kaydedilirken hata oluştu: ${e.toString()}'),
               backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
             ),
@@ -162,7 +175,10 @@ class _RegisterPage2State extends State<RegisterPage2> {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.white.withOpacity(0.3), Colors.white.withOpacity(0.1)],
+          colors: [
+            Colors.white.withOpacity(0.3),
+            Colors.white.withOpacity(0.1)
+          ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
@@ -233,7 +249,10 @@ class _RegisterPage2State extends State<RegisterPage2> {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.white.withOpacity(0.3), Colors.white.withOpacity(0.1)],
+          colors: [
+            Colors.white.withOpacity(0.3),
+            Colors.white.withOpacity(0.1)
+          ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
@@ -303,7 +322,10 @@ class _RegisterPage2State extends State<RegisterPage2> {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.white.withOpacity(0.3), Colors.white.withOpacity(0.1)],
+          colors: [
+            Colors.white.withOpacity(0.3),
+            Colors.white.withOpacity(0.1)
+          ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
@@ -333,7 +355,9 @@ class _RegisterPage2State extends State<RegisterPage2> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: state.hasError ? Colors.red : Colors.white.withOpacity(0.5),
+                      color: state.hasError
+                          ? Colors.red
+                          : Colors.white.withOpacity(0.5),
                     ),
                   ),
                   child: Row(
@@ -347,7 +371,8 @@ class _RegisterPage2State extends State<RegisterPage2> {
                           ),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(Icons.calendar_today, color: Colors.white, size: 20),
+                        child: Icon(Icons.calendar_today,
+                            color: Colors.white, size: 20),
                       ),
                       Expanded(
                         child: Text(
@@ -355,7 +380,9 @@ class _RegisterPage2State extends State<RegisterPage2> {
                               ? 'Doğum tarihi seçiniz'
                               : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
                           style: TextStyle(
-                            color: _selectedDate == null ? Colors.grey[600] : Colors.black87,
+                            color: _selectedDate == null
+                                ? Colors.grey[600]
+                                : Colors.black87,
                             fontSize: 16,
                           ),
                         ),
@@ -462,7 +489,8 @@ class _RegisterPage2State extends State<RegisterPage2> {
                                 ),
                               ],
                             ),
-                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 10),
                             child: Text(
                               'Profil Bilgileri',
                               style: TextStyle(
@@ -531,9 +559,11 @@ class _RegisterPage2State extends State<RegisterPage2> {
                       labelText: 'Kilo (kg)',
                       hintText: 'Örn: 70.5',
                       icon: Icons.monitor_weight,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          TextInputType.numberWithOptions(decimal: true),
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d+\.?\d{0,2}'))
                       ],
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -696,15 +726,16 @@ class _RegisterPage2State extends State<RegisterPage2> {
                           ),
                         ),
                         child: _isLoading
-                            ? CircularProgressIndicator(color: Color(0xFFE91E63))
+                            ? CircularProgressIndicator(
+                                color: Color(0xFFE91E63))
                             : Text(
-                          'Profili Kaydet',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFE91E63),
-                          ),
-                        ),
+                                'Profili Kaydet',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFE91E63),
+                                ),
+                              ),
                       ),
                     ),
 

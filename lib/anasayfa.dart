@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print, deprecated_member_use, duplicate_ignore
+
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -8,6 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class HomeScreen extends StatefulWidget {
+  // ignore: use_super_parameters
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
@@ -197,6 +200,8 @@ class _HomeScreenState extends State<HomeScreen> {
               fullDateTime =
                   DateTime(tarih.year, tarih.month, tarih.day, hour, minute);
             } catch (e) {
+              // ignore: duplicate_ignore
+              // ignore: avoid_print
               print('Saat ayrıştırma hatası: $e');
             }
           }
@@ -235,6 +240,8 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       });
     } catch (e) {
+      // ignore: duplicate_ignore
+      // ignore: avoid_print
       print('Randevu getirme hatası: $e');
     } finally {
       setState(() {
@@ -341,7 +348,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (limitExceeded) {
       final typeText = type == 'fasting' ? 'açlık' : 'tokluk';
       _showErrorMessage(
-          'Bugün için maksimum $typeText ölçümü sayısına ulaştınız (${maxDailyReadings} ölçüm)');
+          'Bugün için maksimum $typeText ölçümü sayısına ulaştınız ($maxDailyReadings ölçüm)');
       return;
     }
 
@@ -367,6 +374,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _loadChartData();
 
       final typeText = type == 'fasting' ? 'Açlık' : 'Tokluk';
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$typeText şekeri kaydedildi'),
@@ -569,6 +577,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
+                            // ignore: deprecated_member_use
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 2,
                             blurRadius: 5,
@@ -622,6 +631,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
+                            // ignore: deprecated_member_use
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 2,
                             blurRadius: 5,
@@ -654,7 +664,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Text(
                                       "${_totalCalories.toStringAsFixed(4)} kcal",
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
                                       ),
@@ -662,7 +672,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Text(
                                       "${(_totalSeconds ~/ 60)} dakika ${(_totalSeconds % 60).toInt()} sn",
                                       style: const TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
                                       ),
@@ -698,6 +708,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
+                            // ignore: deprecated_member_use
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 2,
                             blurRadius: 5,

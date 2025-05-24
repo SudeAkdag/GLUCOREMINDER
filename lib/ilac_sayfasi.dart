@@ -1,9 +1,11 @@
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gluco_reminder/profil.dart';
 
 class Ilac {
-  String? docId; 
+  String? docId;
   String ad;
   String tur;
   String dozaj;
@@ -14,7 +16,7 @@ class Ilac {
   String not;
 
   Ilac({
-    this.docId, 
+    this.docId,
     required this.ad,
     required this.tur,
     required this.dozaj,
@@ -57,7 +59,6 @@ class Ilac {
   }
 }
 
-
 class IlacSayfasi extends StatefulWidget {
   const IlacSayfasi({super.key});
 
@@ -69,24 +70,24 @@ class _IlacSayfasiState extends State<IlacSayfasi> {
   List<Ilac> ilaclar = [];
 
   @override
-void initState() {
-  super.initState();
-  verileriGetir();
-}
+  void initState() {
+    super.initState();
+    verileriGetir();
+  }
 
-Future<void> verileriGetir() async {
-  final querySnapshot =
-      await FirebaseFirestore.instance.collection("ilac_verileri").get();
+  Future<void> verileriGetir() async {
+    final querySnapshot =
+        await FirebaseFirestore.instance.collection("ilac_verileri").get();
 
-  final List<Ilac> geciciListe = querySnapshot.docs
-      .map((doc) => Ilac.fromMap(doc.data(), doc.id)) // 🔁 docId'yi geçiriyoruz
-      .toList();
+    final List<Ilac> geciciListe = querySnapshot.docs
+        .map((doc) =>
+            Ilac.fromMap(doc.data(), doc.id)) // 🔁 docId'yi geçiriyoruz
+        .toList();
 
-  setState(() {
-    ilaclar = geciciListe;
-  });
-}
-
+    setState(() {
+      ilaclar = geciciListe;
+    });
+  }
 
   void _ilacEkleOrDuzenle({Ilac? mevcutIlac, int? index}) async {
     final Ilac? yeniIlac = await showModalBottomSheet<Ilac>(
@@ -113,29 +114,29 @@ Future<void> verileriGetir() async {
   }
 
   Future<void> _ilacSil(int index) async {
-  final ilac = ilaclar[index];
+    final ilac = ilaclar[index];
 
-  // Firestore'dan kalıcı olarak sil
-  if (ilac.docId != null) {
-    try {
-      await FirebaseFirestore.instance
-          .collection("ilac_verileri")
-          .doc(ilac.docId)
-          .delete();
-    } catch (e) {
-      debugPrint("Firebase'den silme hatası: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Silme işlemi başarısız: $e")),
-      );
-      return; // Hata varsa devam etme
+    // Firestore'dan kalıcı olarak sil
+    if (ilac.docId != null) {
+      try {
+        await FirebaseFirestore.instance
+            .collection("ilac_verileri")
+            .doc(ilac.docId)
+            .delete();
+      } catch (e) {
+        debugPrint("Firebase'den silme hatası: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Silme işlemi başarısız: $e")),
+        );
+        return; // Hata varsa devam etme
+      }
     }
-  }
 
-  // Listeden çıkar
-  setState(() {
-    ilaclar.removeAt(index);
-  });
-}
+    // Listeden çıkar
+    setState(() {
+      ilaclar.removeAt(index);
+    });
+  }
 
   void _ilacDetay(Ilac ilac, int index) {
     showDialog(
@@ -244,135 +245,135 @@ Future<void> verileriGetir() async {
           ),
         ],
       ),
-     body: ilaclar.isEmpty
-    ? const Center(
-        child: Text(
-          "Henüz ilaç eklenmedi.",
-          style: TextStyle(
-            color: Color(0xFFB53E6B),
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      )
-    : ListView.builder(
-        itemCount: ilaclar.length,
-        itemBuilder: (context, index) {
-          final ilac = ilaclar[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            elevation: 5,
-            shadowColor: Colors.purpleAccent.withOpacity(0.2),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFDE8F1), Color(0xFFE8DAF8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+      body: ilaclar.isEmpty
+          ? const Center(
+              child: Text(
+                "Henüz ilaç eklenmedi.",
+                style: TextStyle(
+                  color: Color(0xFFB53E6B),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
                 ),
-                borderRadius: BorderRadius.circular(20),
               ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 12),
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFB53E6B),
-                  child: Icon(Icons.medication, color: Colors.white),
-                ),
-                title: Text(
-                  ilac.ad,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: Color(0xFF6D2840),
+            )
+          : ListView.builder(
+              itemCount: ilaclar.length,
+              itemBuilder: (context, index) {
+                final ilac = ilaclar[index];
+                return Card(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                ),
-                subtitle: Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "${ilac.zaman} - ${ilac.saat.join(', ')}",
+                  elevation: 5,
+                  shadowColor: Colors.purpleAccent.withOpacity(0.2),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFDE8F1), Color(0xFFE8DAF8)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFB53E6B),
+                        child: Icon(Icons.medication, color: Colors.white),
+                      ),
+                      title: Text(
+                        ilac.ad,
                         style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF9E5160),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Color(0xFF6D2840),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.local_hospital,
-                              size: 16, color: Color(0xFFB53E6B)),
-                          const SizedBox(width: 4),
-                          Text(
-                            ilac.tur,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF7B4763),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "${ilac.zaman} - ${ilac.saat.join(', ')}",
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF9E5160),
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(Icons.local_hospital,
+                                    size: 16, color: Color(0xFFB53E6B)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  ilac.tur,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF7B4763),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
+                      trailing: const Icon(Icons.arrow_forward_ios,
+                          color: Color(0xFFBF4D90)),
+                      onTap: () => _ilacDetay(ilac, index),
+                    ),
                   ),
-                ),
-                trailing: const Icon(Icons.arrow_forward_ios,
-                    color: Color(0xFFBF4D90)),
-                onTap: () => _ilacDetay(ilac, index),
-              ),
+                );
+              },
             ),
-          );
-        },
-      ),
-
-     floatingActionButton: Padding(
-  padding: const EdgeInsets.only(right: 16.0, bottom: 16.0), // Sağ ve alt boşluk
-  child: GestureDetector(
-    onTap: () => _ilacEkleOrDuzenle(),
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFFB53E6B), // Pembe
-            Color(0xFF8E2BC9), // Mor
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(
+            right: 16.0, bottom: 16.0), // Sağ ve alt boşluk
+        child: GestureDetector(
+          onTap: () => _ilacEkleOrDuzenle(),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFFB53E6B), // Pembe
+                  Color(0xFF8E2BC9), // Mor
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.purple.withOpacity(0.3),
+                  offset: const Offset(0, 4),
+                  blurRadius: 10,
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(Icons.add, color: Colors.white),
+                SizedBox(width: 8),
+                Text(
+                  "İlaç Ekle",
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ],
+            ),
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.purple.withOpacity(0.3),
-            offset: const Offset(0, 4),
-            blurRadius: 10,
-          ),
-        ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: const [
-          Icon(Icons.add, color: Colors.white),
-          SizedBox(width: 8),
-          Text(
-            "İlaç Ekle",
-            style: TextStyle(color: Colors.white, fontSize: 16),
-          ),
-        ],
-      ),
-    ),
-  ),
-),
-floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-
-
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
+
 class IlacForm extends StatefulWidget {
   final Ilac? ilac;
 
@@ -395,7 +396,12 @@ class _IlacFormState extends State<IlacForm> {
   List<TimeOfDay?> secilenSaatler = [null, null, null];
 
   final List<String> turler = [
-    "Tablet", "Şurup", "Enjeksiyon", "Kapsül", "Fitil", "Krem"
+    "Tablet",
+    "Şurup",
+    "Enjeksiyon",
+    "Kapsül",
+    "Fitil",
+    "Krem"
   ];
   final List<String> aclikDurumlari = ["Aç", "Tok", "Aç veya Tok"];
 
@@ -438,7 +444,8 @@ class _IlacFormState extends State<IlacForm> {
       final hour = int.parse(saatDakika[0]);
       final minute = int.parse(saatDakika[1]);
       final isPM = parts[1].toUpperCase() == 'PM';
-      return TimeOfDay(hour: isPM && hour != 12 ? hour + 12 : hour, minute: minute);
+      return TimeOfDay(
+          hour: isPM && hour != 12 ? hour + 12 : hour, minute: minute);
     } catch (e) {
       return null;
     }
@@ -503,7 +510,8 @@ class _IlacFormState extends State<IlacForm> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
@@ -525,7 +533,6 @@ class _IlacFormState extends State<IlacForm> {
               _buildDropdownInt("⏱️ Günde kaç kez?", [1, 2, 3], kullanmaSayisi,
                   (val) => setState(() => kullanmaSayisi = val ?? 1)),
               const SizedBox(height: 14),
-
               ...List.generate(kullanmaSayisi, (index) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
@@ -539,12 +546,12 @@ class _IlacFormState extends State<IlacForm> {
                           ? _formatTimeOfDay(secilenSaatler[index]!)
                           : "Henüz seçilmedi",
                     ),
-                    trailing: const Icon(Icons.access_time, color: Colors.deepPurple),
+                    trailing:
+                        const Icon(Icons.access_time, color: Colors.deepPurple),
                     onTap: () => _saatSec(index),
                   ),
                 );
               }),
-
               _buildTextField("📝 Not", notController),
               const SizedBox(height: 24),
               SizedBox(
@@ -572,69 +579,69 @@ class _IlacFormState extends State<IlacForm> {
   }
 
   Widget _buildTextField(String label, TextEditingController controller) {
-  return TextFormField(
-    controller: controller,
-    decoration: InputDecoration(
-      labelText: label,
-      prefixIcon: const Icon(Icons.edit_note),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-      filled: true,
-      fillColor: const Color(0xFFF3EEF9),
-    ),
-    validator: (value) =>
-        value == null || value.isEmpty ? "$label boş bırakılamaz" : null,
-  );
-}
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: const Icon(Icons.edit_note),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        filled: true,
+        fillColor: const Color(0xFFF3EEF9),
+      ),
+      validator: (value) =>
+          value == null || value.isEmpty ? "$label boş bırakılamaz" : null,
+    );
+  }
 
-Widget _buildDropdown(
-  String label,
-  List<String> items,
-  String? selectedValue,
-  ValueChanged<String?> onChanged,
-) {
-  final uniqueItems = items.toSet().toList();
+  Widget _buildDropdown(
+    String label,
+    List<String> items,
+    String? selectedValue,
+    ValueChanged<String?> onChanged,
+  ) {
+    final uniqueItems = items.toSet().toList();
 
-  return DropdownButtonFormField<String>(
-    value: uniqueItems.contains(selectedValue) ? selectedValue : null,
-    items: uniqueItems
-        .map((item) => DropdownMenuItem(value: item, child: Text(item)))
-        .toList(),
-    onChanged: onChanged,
-    decoration: InputDecoration(
-      labelText: label,
-      prefixIcon: const Icon(Icons.arrow_drop_down_circle_outlined),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-      filled: true,
-      fillColor: const Color(0xFFF3EEF9),
-    ),
-    validator: (value) =>
-        value == null || value.isEmpty ? "$label seçilmelidir" : null,
-  );
-}
+    return DropdownButtonFormField<String>(
+      value: uniqueItems.contains(selectedValue) ? selectedValue : null,
+      items: uniqueItems
+          .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+          .toList(),
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: const Icon(Icons.arrow_drop_down_circle_outlined),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        filled: true,
+        fillColor: const Color(0xFFF3EEF9),
+      ),
+      validator: (value) =>
+          value == null || value.isEmpty ? "$label seçilmelidir" : null,
+    );
+  }
 
-Widget _buildDropdownInt(
-  String label,
-  List<int> items,
-  int? selectedValue,
-  ValueChanged<int?> onChanged,
-) {
-  final uniqueItems = items.toSet().toList();
+  Widget _buildDropdownInt(
+    String label,
+    List<int> items,
+    int? selectedValue,
+    ValueChanged<int?> onChanged,
+  ) {
+    final uniqueItems = items.toSet().toList();
 
-  return DropdownButtonFormField<int>(
-    value: uniqueItems.contains(selectedValue) ? selectedValue : null,
-    items: uniqueItems
-        .map((item) =>
-            DropdownMenuItem(value: item, child: Text("$item kez")))
-        .toList(),
-    onChanged: onChanged,
-    decoration: InputDecoration(
-      labelText: label,
-      prefixIcon: const Icon(Icons.repeat_rounded),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-      filled: true,
-      fillColor: const Color(0xFFF3EEF9),
-    ),
-    validator: (value) => value == null ? "$label seçilmelidir" : null,
-  );
-}
+    return DropdownButtonFormField<int>(
+      value: uniqueItems.contains(selectedValue) ? selectedValue : null,
+      items: uniqueItems
+          .map(
+              (item) => DropdownMenuItem(value: item, child: Text("$item kez")))
+          .toList(),
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: const Icon(Icons.repeat_rounded),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        filled: true,
+        fillColor: const Color(0xFFF3EEF9),
+      ),
+      validator: (value) => value == null ? "$label seçilmelidir" : null,
+    );
+  }
 }

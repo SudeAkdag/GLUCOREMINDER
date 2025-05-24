@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:gluco_reminder/bisiklet.dart';
@@ -263,20 +265,26 @@ class _EgzersizSayfasi extends State<EgzersizSayfasi>
   }
 
   String _hesaplaUykuSuresi(String yatmaSaati, String uyanmaSaati) {
-    final yatma = TimeOfDay(
-      hour: int.parse(yatmaSaati.split(":")[0]),
-      minute: int.parse(yatmaSaati.split(":")[1]),
-    );
-    final uyanma = TimeOfDay(
-      hour: int.parse(uyanmaSaati.split(":")[0]),
-      minute: int.parse(uyanmaSaati.split(":")[1]),
-    );
+    int parseSaat(String saatStr) {
+      // Örnek giriş: "12:30 AM" veya "1:45 PM"
+      final parts = saatStr.trim().split(' '); // ["12:30", "AM"]
+      final saatDakika = parts[0].split(':'); // ["12", "30"]
+      int saat = int.parse(saatDakika[0]);
+      int dakika = int.parse(saatDakika[1]);
+      final donem = parts.length > 1 ? parts[1].toUpperCase() : '';
 
-    final yatmaDakika = yatma.hour * 60 + yatma.minute;
-    final uyanmaDakika = uyanma.hour * 60 + uyanma.minute;
+      // AM/PM dönüşümü
+      if (donem == 'PM' && saat != 12) saat += 12;
+      if (donem == 'AM' && saat == 12) saat = 0;
+
+      return saat * 60 + dakika;
+    }
+
+    final yatmaDakika = parseSaat(yatmaSaati);
+    final uyanmaDakika = parseSaat(uyanmaSaati);
 
     int fark = uyanmaDakika - yatmaDakika;
-    if (fark < 0) fark += 1440; // gece yarısı geçtiyse
+    if (fark < 0) fark += 1440; // gece yarısını geçtiyse
 
     final saat = fark ~/ 60;
     final dakika = fark % 60;
@@ -1016,7 +1024,10 @@ class _EgzersizSayfasi extends State<EgzersizSayfasi>
 }
 
 class SleepFormPopup extends StatefulWidget {
+  const SleepFormPopup({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _SleepFormPopupState createState() => _SleepFormPopupState();
 }
 
@@ -1059,10 +1070,13 @@ class _SleepFormPopupState extends State<SleepFormPopup> {
             .where('timestamp', isLessThan: Timestamp.fromDate(bugunBitis))
             .get();
 
+        if (!mounted) return;
+
         if (querySnapshot.docs.isNotEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Bugün için zaten bir veri eklediniz.")),
           );
+          Navigator.pop(context); // ✨ Form ekranını kapat
           return;
         }
 
@@ -1074,13 +1088,16 @@ class _SleepFormPopupState extends State<SleepFormPopup> {
           'timestamp': Timestamp.now(),
         });
 
+        if (!mounted) return;
         Navigator.pop(context);
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Hata oluştu: $e")),
         );
       }
     } else {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Lütfen tüm alanları doldurun")),
       );

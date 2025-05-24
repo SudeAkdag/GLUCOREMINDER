@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -135,29 +137,38 @@ class _ProfilState extends State<Profil> {
             children: [
               _buildAvatar(),
               const SizedBox(height: 24),
-              _buildTextField('E-posta', _controllers['email']!, icon: Icons.email_outlined, enabled: false),
-              _buildTextField('Ad Soyad', _controllers['name']!, icon: Icons.person_outline),
-              _buildTextField('Doğum Tarihi', _controllers['birthDate']!, icon: Icons.calendar_today_outlined),
+              _buildTextField('E-posta', _controllers['email']!,
+                  icon: Icons.email_outlined, enabled: false),
+              _buildTextField('Ad Soyad', _controllers['name']!,
+                  icon: Icons.person_outline),
+              _buildTextField('Doğum Tarihi', _controllers['birthDate']!,
+                  icon: Icons.calendar_today_outlined),
               _buildDropdown('Cinsiyet', gender, ['Kadın', 'Erkek'], (v) {
                 if (v != null) setState(() => gender = v);
               }, icon: Icons.wc_outlined),
               Row(
                 children: [
                   Expanded(
-                    child: _buildTextField('Boy (cm)', _controllers['height']!, icon: Icons.height_outlined),
+                    child: _buildTextField('Boy (cm)', _controllers['height']!,
+                        icon: Icons.height_outlined),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildTextField('Kilo (kg)', _controllers['weight']!, icon: Icons.monitor_weight_outlined),
+                    child: _buildTextField('Kilo (kg)', _controllers['weight']!,
+                        icon: Icons.monitor_weight_outlined),
                   ),
                 ],
               ),
-              _buildDropdown('Diyabet Tipi', diabetesType, ['Tip I', 'Tip II'], (v) {
+              _buildDropdown('Diyabet Tipi', diabetesType, ['Tip I', 'Tip II'],
+                  (v) {
                 if (v != null) setState(() => diabetesType = v);
               }, icon: Icons.bloodtype_outlined),
-              _buildTextField('Acil Durum Bilgisi', _controllers['emergency']!, icon: Icons.warning_amber_outlined),
-              _buildTextField('Kan Grubu', _controllers['blood']!, icon: Icons.invert_colors_outlined),
-              _buildTextField('İletişim Bilgisi', _controllers['contact']!, icon: Icons.phone_outlined),
+              _buildTextField('Acil Durum Bilgisi', _controllers['emergency']!,
+                  icon: Icons.warning_amber_outlined),
+              _buildTextField('Kan Grubu', _controllers['blood']!,
+                  icon: Icons.invert_colors_outlined),
+              _buildTextField('İletişim Bilgisi', _controllers['contact']!,
+                  icon: Icons.phone_outlined),
               const SizedBox(height: 28),
               ElevatedButton.icon(
                 onPressed: () async {

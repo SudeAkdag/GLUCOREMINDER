@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:gluco_reminder/auth_service.dart';
 import 'package:gluco_reminder/register_page.dart';
@@ -154,7 +156,8 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ],
                             ),
-                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 10),
                             child: Text(
                               'GlucoReminder',
                               style: TextStyle(
@@ -183,7 +186,10 @@ class _LoginPageState extends State<LoginPage> {
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Colors.white.withOpacity(0.3), Colors.white.withOpacity(0.1)],
+                          colors: [
+                            Colors.white.withOpacity(0.3),
+                            Colors.white.withOpacity(0.1)
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
@@ -211,7 +217,8 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Icon(Icons.email, color: Colors.white, size: 20),
+                            child: Icon(Icons.email,
+                                color: Colors.white, size: 20),
                           ),
                           filled: true,
                           fillColor: Colors.white,
@@ -221,11 +228,13 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: Colors.white.withOpacity(0.5)),
+                            borderSide: BorderSide(
+                                color: Colors.white.withOpacity(0.5)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: Colors.white, width: 2),
+                            borderSide:
+                                BorderSide(color: Colors.white, width: 2),
                           ),
                           errorBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -240,7 +249,8 @@ class _LoginPageState extends State<LoginPage> {
                           if (value == null || value.isEmpty) {
                             return 'E-posta adresi gerekli';
                           }
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                              .hasMatch(value)) {
                             return 'Geçerli bir e-posta adresi girin';
                           }
                           return null;
@@ -254,7 +264,10 @@ class _LoginPageState extends State<LoginPage> {
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Colors.white.withOpacity(0.3), Colors.white.withOpacity(0.1)],
+                          colors: [
+                            Colors.white.withOpacity(0.3),
+                            Colors.white.withOpacity(0.1)
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
@@ -282,11 +295,14 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Icon(Icons.lock, color: Colors.white, size: 20),
+                            child:
+                                Icon(Icons.lock, color: Colors.white, size: 20),
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
                               color: Color(0xFF03DAC6),
                             ),
                             onPressed: () {
@@ -303,11 +319,13 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: Colors.white.withOpacity(0.5)),
+                            borderSide: BorderSide(
+                                color: Colors.white.withOpacity(0.5)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: Colors.white, width: 2),
+                            borderSide:
+                                BorderSide(color: Colors.white, width: 2),
                           ),
                           errorBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -364,15 +382,16 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         child: _isLoading
-                            ? CircularProgressIndicator(color: Color(0xFF6200EE))
+                            ? CircularProgressIndicator(
+                                color: Color(0xFF6200EE))
                             : Text(
-                          'Giriş Yap',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF6200EE),
-                          ),
-                        ),
+                                'Giriş Yap',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF6200EE),
+                                ),
+                              ),
                       ),
                     ),
 
@@ -405,14 +424,19 @@ class _LoginPageState extends State<LoginPage> {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => RegisterPage()),
+                                MaterialPageRoute(
+                                    builder: (context) => RegisterPage()),
                               );
                             },
                             child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [Colors.white, Colors.white.withOpacity(0.8)],
+                                  colors: [
+                                    Colors.white,
+                                    Colors.white.withOpacity(0.8)
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                               ),

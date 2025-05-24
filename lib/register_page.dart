@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:gluco_reminder/auth_service.dart';
 import 'package:gluco_reminder/register_page2.dart';
@@ -113,7 +115,10 @@ class _RegisterPageState extends State<RegisterPage> {
                       child: Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Colors.white.withOpacity(0.3), Colors.white.withOpacity(0.1)],
+                            colors: [
+                              Colors.white.withOpacity(0.3),
+                              Colors.white.withOpacity(0.1)
+                            ],
                           ),
                           shape: BoxShape.circle,
                         ),
@@ -177,7 +182,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
                               ],
                             ),
-                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 10),
                             child: Text(
                               'Hesap Oluştur',
                               style: TextStyle(
@@ -206,7 +212,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Colors.white.withOpacity(0.3), Colors.white.withOpacity(0.1)],
+                          colors: [
+                            Colors.white.withOpacity(0.3),
+                            Colors.white.withOpacity(0.1)
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
@@ -234,7 +243,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Icon(Icons.email, color: Colors.white, size: 20),
+                            child: Icon(Icons.email,
+                                color: Colors.white, size: 20),
                           ),
                           filled: true,
                           fillColor: Colors.white,
@@ -244,11 +254,13 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: Colors.white.withOpacity(0.5)),
+                            borderSide: BorderSide(
+                                color: Colors.white.withOpacity(0.5)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: Colors.white, width: 2),
+                            borderSide:
+                                BorderSide(color: Colors.white, width: 2),
                           ),
                           errorBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -263,7 +275,8 @@ class _RegisterPageState extends State<RegisterPage> {
                           if (value == null || value.isEmpty) {
                             return 'E-posta adresi gerekli';
                           }
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                              .hasMatch(value)) {
                             return 'Geçerli bir e-posta adresi girin';
                           }
                           return null;
@@ -277,7 +290,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Colors.white.withOpacity(0.3), Colors.white.withOpacity(0.1)],
+                          colors: [
+                            Colors.white.withOpacity(0.3),
+                            Colors.white.withOpacity(0.1)
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
@@ -305,11 +321,14 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Icon(Icons.lock, color: Colors.white, size: 20),
+                            child:
+                                Icon(Icons.lock, color: Colors.white, size: 20),
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
                               color: Color(0xFFE91E63),
                             ),
                             onPressed: () {
@@ -326,11 +345,13 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: Colors.white.withOpacity(0.5)),
+                            borderSide: BorderSide(
+                                color: Colors.white.withOpacity(0.5)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: Colors.white, width: 2),
+                            borderSide:
+                                BorderSide(color: Colors.white, width: 2),
                           ),
                           errorBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -359,7 +380,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Colors.white.withOpacity(0.3), Colors.white.withOpacity(0.1)],
+                          colors: [
+                            Colors.white.withOpacity(0.3),
+                            Colors.white.withOpacity(0.1)
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
@@ -387,16 +411,20 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Icon(Icons.lock_outline, color: Colors.white, size: 20),
+                            child: Icon(Icons.lock_outline,
+                                color: Colors.white, size: 20),
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                              _obscureConfirmPassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
                               color: Color(0xFFE91E63),
                             ),
                             onPressed: () {
                               setState(() {
-                                _obscureConfirmPassword = !_obscureConfirmPassword;
+                                _obscureConfirmPassword =
+                                    !_obscureConfirmPassword;
                               });
                             },
                           ),
@@ -408,11 +436,13 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: Colors.white.withOpacity(0.5)),
+                            borderSide: BorderSide(
+                                color: Colors.white.withOpacity(0.5)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: Colors.white, width: 2),
+                            borderSide:
+                                BorderSide(color: Colors.white, width: 2),
                           ),
                           errorBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -469,15 +499,16 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                         child: _isLoading
-                            ? CircularProgressIndicator(color: Color(0xFFE91E63))
+                            ? CircularProgressIndicator(
+                                color: Color(0xFFE91E63))
                             : Text(
-                          'Devam et',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFE91E63),
-                          ),
-                        ),
+                                'Devam et',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFE91E63),
+                                ),
+                              ),
                       ),
                     ),
 
@@ -511,10 +542,14 @@ class _RegisterPageState extends State<RegisterPage> {
                               Navigator.pop(context);
                             },
                             child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [Colors.white, Colors.white.withOpacity(0.8)],
+                                  colors: [
+                                    Colors.white,
+                                    Colors.white.withOpacity(0.8)
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                               ),

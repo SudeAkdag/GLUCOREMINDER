@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use, library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -105,7 +107,8 @@ class BesinSayfasi extends StatefulWidget {
   final String ogunTuru; // Öğün türünü belirtmek için eklendi
   final List<SeciliBesin> mevcutBesinler; // Mevcut seçili besinler
 
-  BesinSayfasi({
+  const BesinSayfasi({
+    super.key,
     this.ogunTuru = 'Kahvaltı',
     this.mevcutBesinler = const [],
   });
@@ -114,12 +117,13 @@ class BesinSayfasi extends StatefulWidget {
   _BesinSayfasiState createState() => _BesinSayfasiState();
 }
 
-class _BesinSayfasiState extends State<BesinSayfasi> with SingleTickerProviderStateMixin {
+class _BesinSayfasiState extends State<BesinSayfasi>
+    with SingleTickerProviderStateMixin {
   List<Besin> yemekler = [];
   bool yukleniyor = true;
   late AnimationController _animationController;
   late Animation<double> _animation;
-  TextEditingController _aramaController = TextEditingController();
+  final TextEditingController _aramaController = TextEditingController();
   List<Besin> filtreliYemekler = [];
 
   // Seçilen besinleri takip etmek için
@@ -167,7 +171,9 @@ class _BesinSayfasiState extends State<BesinSayfasi> with SingleTickerProviderSt
         final dynamic data = json.decode(response.body);
         setState(() {
           if (data is Map && data.containsKey('recipes')) {
-            yemekler = (data['recipes'] as List).map((item) => Besin.fromJson(item)).toList();
+            yemekler = (data['recipes'] as List)
+                .map((item) => Besin.fromJson(item))
+                .toList();
           } else if (data is List) {
             yemekler = data.map((item) => Besin.fromJson(item)).toList();
           } else {
@@ -214,7 +220,7 @@ class _BesinSayfasiState extends State<BesinSayfasi> with SingleTickerProviderSt
       } else {
         filtreliYemekler = yemekler
             .where((yemek) =>
-            yemek.name.toLowerCase().contains(aranan.toLowerCase()))
+                yemek.name.toLowerCase().contains(aranan.toLowerCase()))
             .toList();
       }
     });
@@ -304,7 +310,13 @@ class _BesinSayfasiState extends State<BesinSayfasi> with SingleTickerProviderSt
     int toplamKalori = 0;
     seciliBesinler.forEach((besinAdi, adet) {
       var besin = yemekler.firstWhere((y) => y.name == besinAdi,
-          orElse: () => Besin(name: besinAdi, imageUrl: '', calories: 0, protein: 0, carbohydrates: 0, fat: 0));
+          orElse: () => Besin(
+              name: besinAdi,
+              imageUrl: '',
+              calories: 0,
+              protein: 0,
+              carbohydrates: 0,
+              fat: 0));
       toplamKalori += besin.calories * adet;
     });
 
@@ -369,8 +381,14 @@ class _BesinSayfasiState extends State<BesinSayfasi> with SingleTickerProviderSt
                 String besinAdi = seciliBesinler.keys.elementAt(index);
                 int adet = seciliBesinler[besinAdi]!;
                 var besin = yemekler.firstWhere(
-                      (y) => y.name == besinAdi,
-                  orElse: () => Besin(name: besinAdi, imageUrl: '', calories: 0, protein: 0, carbohydrates: 0, fat: 0),
+                  (y) => y.name == besinAdi,
+                  orElse: () => Besin(
+                      name: besinAdi,
+                      imageUrl: '',
+                      calories: 0,
+                      protein: 0,
+                      carbohydrates: 0,
+                      fat: 0),
                 );
 
                 return Container(
@@ -406,27 +424,27 @@ class _BesinSayfasiState extends State<BesinSayfasi> with SingleTickerProviderSt
                         ),
                         child: besin.imageUrl.isNotEmpty
                             ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: CachedNetworkImage(
-                            imageUrl: besin.imageUrl,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Icon(
-                              getBesinIkonu(besin),
-                              color: AppColors.primary,
-                              size: 24,
-                            ),
-                            errorWidget: (context, url, error) => Icon(
-                              getBesinIkonu(besin),
-                              color: AppColors.primary,
-                              size: 24,
-                            ),
-                          ),
-                        )
+                                borderRadius: BorderRadius.circular(8),
+                                child: CachedNetworkImage(
+                                  imageUrl: besin.imageUrl,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Icon(
+                                    getBesinIkonu(besin),
+                                    color: AppColors.primary,
+                                    size: 24,
+                                  ),
+                                  errorWidget: (context, url, error) => Icon(
+                                    getBesinIkonu(besin),
+                                    color: AppColors.primary,
+                                    size: 24,
+                                  ),
+                                ),
+                              )
                             : Icon(
-                          getBesinIkonu(besin),
-                          color: AppColors.primary,
-                          size: 24,
-                        ),
+                                getBesinIkonu(besin),
+                                color: AppColors.primary,
+                                size: 24,
+                              ),
                       ),
                       SizedBox(width: 12),
                       // Besin bilgileri
@@ -460,17 +478,21 @@ class _BesinSayfasiState extends State<BesinSayfasi> with SingleTickerProviderSt
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
-                              icon: Icon(Icons.remove, color: AppColors.primary),
+                              icon:
+                                  Icon(Icons.remove, color: AppColors.primary),
                               onPressed: () => besinAdetiDegistir(besinAdi, -1),
-                              constraints: BoxConstraints(minWidth: 32, minHeight: 32),
+                              constraints:
+                                  BoxConstraints(minWidth: 32, minHeight: 32),
                               padding: EdgeInsets.zero,
                             ),
                           ),
                           Container(
                             margin: EdgeInsets.symmetric(horizontal: 12),
-                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(colors: AppColors.primaryGradient),
+                              gradient: LinearGradient(
+                                  colors: AppColors.primaryGradient),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -490,7 +512,8 @@ class _BesinSayfasiState extends State<BesinSayfasi> with SingleTickerProviderSt
                             child: IconButton(
                               icon: Icon(Icons.add, color: AppColors.primary),
                               onPressed: () => besinAdetiDegistir(besinAdi, 1),
-                              constraints: BoxConstraints(minWidth: 32, minHeight: 32),
+                              constraints:
+                                  BoxConstraints(minWidth: 32, minHeight: 32),
                               padding: EdgeInsets.zero,
                             ),
                           ),
@@ -614,286 +637,349 @@ class _BesinSayfasiState extends State<BesinSayfasi> with SingleTickerProviderSt
             Expanded(
               child: yukleniyor
                   ? Center(
-                child: Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
-                  child: ListView.builder(
-                    padding: EdgeInsets.all(16),
-                    itemCount: 10,
-                    itemBuilder: (context, index) {
-                      return Card(
-                        margin: EdgeInsets.only(bottom: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                      child: Shimmer.fromColors(
+                        baseColor: Colors.grey[300]!,
+                        highlightColor: Colors.grey[100]!,
+                        child: ListView.builder(
+                          padding: EdgeInsets.all(16),
+                          itemCount: 10,
+                          itemBuilder: (context, index) {
+                            return Card(
+                              margin: EdgeInsets.only(bottom: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Container(height: 100),
+                            );
+                          },
                         ),
-                        child: Container(height: 100),
-                      );
-                    },
-                  ),
-                ),
-              )
+                      ),
+                    )
                   : filtreliYemekler.isEmpty
-                  ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.grey[400],
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Bir Şeyler Ters Gitti!\nLütfen Sayfayı Yenileyin.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: yemekleriGetir,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.refresh, size: 20),
-                          SizedBox(width: 8),
-                          Text('Yenile'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              )
-                  : ListView.builder(
-                padding: EdgeInsets.all(16),
-                itemCount: filtreliYemekler.length,
-                itemBuilder: (context, index) {
-                  final yemek = filtreliYemekler[index];
-                  final secilenAdet = seciliBesinler[yemek.name] ?? 0;
-
-                  return AnimatedBuilder(
-                    animation: _animation,
-                    builder: (context, child) {
-                      return AnimatedOpacity(
-                        duration: Duration(milliseconds: 500),
-                        opacity: 1.0,
-                        child: child,
-                      );
-                    },
-                    child: Container(
-                      margin: EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.white,
-                            AppColors.primaryLight.withOpacity(0.1),
-                            Colors.white,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withOpacity(0.1),
-                            offset: Offset(0, 6),
-                            blurRadius: 12,
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                'Bir Şeyler Ters Gitti!\nLütfen Sayfayı Yenileyin.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: yemekleriGetir,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 24, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.refresh, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Yenile'),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => besinSec(yemek),
-                            child: Container(
-                              padding: EdgeInsets.all(16),
-                              child: Row(
-                                children: [
-                                  // Besin ikonu veya görseli
-                                  Hero(
-                                    tag: 'besin_${yemek.name}',
-                                    child: Container(
-                                      width: 70,
-                                      height: 70,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            AppColors.primaryLight.withOpacity(0.3),
-                                            AppColors.primaryLight.withOpacity(0.1),
-                                          ],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        ),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: yemek.imageUrl.isNotEmpty
-                                          ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: CachedNetworkImage(
-                                          imageUrl: yemek.imageUrl,
-                                          fit: BoxFit.cover,
-                                          placeholder: (context, url) => Shimmer.fromColors(
-                                            baseColor: Colors.grey[300]!,
-                                            highlightColor: Colors.grey[100]!,
-                                            child: Container(color: Colors.white),
-                                          ),
-                                          errorWidget: (context, url, error) => Icon(
-                                            getBesinIkonu(yemek),
-                                            size: 36,
-                                            color: AppColors.primary,
-                                          ),
-                                        ),
-                                      )
-                                          : Icon(
-                                        getBesinIkonu(yemek),
-                                        size: 36,
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
+                        )
+                      : ListView.builder(
+                          padding: EdgeInsets.all(16),
+                          itemCount: filtreliYemekler.length,
+                          itemBuilder: (context, index) {
+                            final yemek = filtreliYemekler[index];
+                            final secilenAdet = seciliBesinler[yemek.name] ?? 0;
+
+                            return AnimatedBuilder(
+                              animation: _animation,
+                              builder: (context, child) {
+                                return AnimatedOpacity(
+                                  duration: Duration(milliseconds: 500),
+                                  opacity: 1.0,
+                                  child: child,
+                                );
+                              },
+                              child: Container(
+                                margin: EdgeInsets.only(bottom: 16),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.white,
+                                      AppColors.primaryLight.withOpacity(0.1),
+                                      Colors.white,
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
                                   ),
-                                  SizedBox(width: 16),
-                                  // Besin bilgileri
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          yemek.name,
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.onSurface,
-                                          ),
-                                        ),
-                                        SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.local_fire_department,
-                                              size: 16,
-                                              color: Colors.red[400],
-                                            ),
-                                            SizedBox(width: 4),
-                                            Text(
-                                              "${yemek.calories} kcal",
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                            SizedBox(width: 12),
-                                            Icon(
-                                              Icons.fitness_center,
-                                              size: 16,
-                                              color: Colors.blue[400],
-                                            ),
-                                            SizedBox(width: 4),
-                                            Text(
-                                              "${yemek.protein} g",
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        // Seçilen adet göstergesi
-                                        if (secilenAdet > 0)
-                                          Container(
-                                            margin: EdgeInsets.only(top: 4),
-                                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              gradient: LinearGradient(colors: AppColors.primaryGradient),
-                                              borderRadius: BorderRadius.circular(10),
-                                            ),
-                                            child: Text(
-                                              '$secilenAdet adet seçildi',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                  // Adet kontrol butonları
-                                  if (secilenAdet > 0) ...[
-                                    Row(
-                                      children: [
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            color: AppColors.primary.withOpacity(0.1),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: IconButton(
-                                            icon: Icon(Icons.remove, color: AppColors.primary),
-                                            onPressed: () => besinAdetiDegistir(yemek.name, -1),
-                                            constraints: BoxConstraints(minWidth: 32, minHeight: 32),
-                                            padding: EdgeInsets.zero,
-                                          ),
-                                        ),
-                                        Container(
-                                          margin: EdgeInsets.symmetric(horizontal: 8),
-                                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(colors: AppColors.primaryGradient),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Text(
-                                            '$secilenAdet',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            color: AppColors.primary.withOpacity(0.1),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: IconButton(
-                                            icon: Icon(Icons.add, color: AppColors.primary),
-                                            onPressed: () => besinAdetiDegistir(yemek.name, 1),
-                                            constraints: BoxConstraints(minWidth: 32, minHeight: 32),
-                                            padding: EdgeInsets.zero,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ] else ...[
-                                    // Besin seçme butonu - Gradient
-                                    _buildGradientButton(
-                                      text: "Seç",
-                                      onPressed: () => besinSec(yemek),
-                                      width: 60,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primary.withOpacity(0.1),
+                                      offset: Offset(0, 6),
+                                      blurRadius: 12,
                                     ),
                                   ],
-                                ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => besinSec(yemek),
+                                      child: Container(
+                                        padding: EdgeInsets.all(16),
+                                        child: Row(
+                                          children: [
+                                            // Besin ikonu veya görseli
+                                            Hero(
+                                              tag: 'besin_${yemek.name}',
+                                              child: Container(
+                                                width: 70,
+                                                height: 70,
+                                                decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                    colors: [
+                                                      AppColors.primaryLight
+                                                          .withOpacity(0.3),
+                                                      AppColors.primaryLight
+                                                          .withOpacity(0.1),
+                                                    ],
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: yemek.imageUrl.isNotEmpty
+                                                    ? ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(12),
+                                                        child:
+                                                            CachedNetworkImage(
+                                                          imageUrl:
+                                                              yemek.imageUrl,
+                                                          fit: BoxFit.cover,
+                                                          placeholder: (context,
+                                                                  url) =>
+                                                              Shimmer
+                                                                  .fromColors(
+                                                            baseColor: Colors
+                                                                .grey[300]!,
+                                                            highlightColor:
+                                                                Colors
+                                                                    .grey[100]!,
+                                                            child: Container(
+                                                                color: Colors
+                                                                    .white),
+                                                          ),
+                                                          errorWidget: (context,
+                                                                  url, error) =>
+                                                              Icon(
+                                                            getBesinIkonu(
+                                                                yemek),
+                                                            size: 36,
+                                                            color: AppColors
+                                                                .primary,
+                                                          ),
+                                                        ),
+                                                      )
+                                                    : Icon(
+                                                        getBesinIkonu(yemek),
+                                                        size: 36,
+                                                        color:
+                                                            AppColors.primary,
+                                                      ),
+                                              ),
+                                            ),
+                                            SizedBox(width: 16),
+                                            // Besin bilgileri
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    yemek.name,
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color:
+                                                          AppColors.onSurface,
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 4),
+                                                  Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons
+                                                            .local_fire_department,
+                                                        size: 16,
+                                                        color: Colors.red[400],
+                                                      ),
+                                                      SizedBox(width: 4),
+                                                      Text(
+                                                        "${yemek.calories} kcal",
+                                                        style: TextStyle(
+                                                          fontSize: 14,
+                                                          color:
+                                                              Colors.grey[600],
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 12),
+                                                      Icon(
+                                                        Icons.fitness_center,
+                                                        size: 16,
+                                                        color: Colors.blue[400],
+                                                      ),
+                                                      SizedBox(width: 4),
+                                                      Text(
+                                                        "${yemek.protein} g",
+                                                        style: TextStyle(
+                                                          fontSize: 14,
+                                                          color:
+                                                              Colors.grey[600],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  // Seçilen adet göstergesi
+                                                  if (secilenAdet > 0)
+                                                    Container(
+                                                      margin: EdgeInsets.only(
+                                                          top: 4),
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 2),
+                                                      decoration: BoxDecoration(
+                                                        gradient: LinearGradient(
+                                                            colors: AppColors
+                                                                .primaryGradient),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
+                                                      ),
+                                                      child: Text(
+                                                        '$secilenAdet adet seçildi',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                            // Adet kontrol butonları
+                                            if (secilenAdet > 0) ...[
+                                              Row(
+                                                children: [
+                                                  Container(
+                                                    decoration: BoxDecoration(
+                                                      color: AppColors.primary
+                                                          .withOpacity(0.1),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: IconButton(
+                                                      icon: Icon(Icons.remove,
+                                                          color: AppColors
+                                                              .primary),
+                                                      onPressed: () =>
+                                                          besinAdetiDegistir(
+                                                              yemek.name, -1),
+                                                      constraints:
+                                                          BoxConstraints(
+                                                              minWidth: 32,
+                                                              minHeight: 32),
+                                                      padding: EdgeInsets.zero,
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    margin:
+                                                        EdgeInsets.symmetric(
+                                                            horizontal: 8),
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                            horizontal: 12,
+                                                            vertical: 4),
+                                                    decoration: BoxDecoration(
+                                                      gradient: LinearGradient(
+                                                          colors: AppColors
+                                                              .primaryGradient),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              12),
+                                                    ),
+                                                    child: Text(
+                                                      '$secilenAdet',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    decoration: BoxDecoration(
+                                                      color: AppColors.primary
+                                                          .withOpacity(0.1),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: IconButton(
+                                                      icon: Icon(Icons.add,
+                                                          color: AppColors
+                                                              .primary),
+                                                      onPressed: () =>
+                                                          besinAdetiDegistir(
+                                                              yemek.name, 1),
+                                                      constraints:
+                                                          BoxConstraints(
+                                                              minWidth: 32,
+                                                              minHeight: 32),
+                                                      padding: EdgeInsets.zero,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ] else ...[
+                                              // Besin seçme butonu - Gradient
+                                              _buildGradientButton(
+                                                text: "Seç",
+                                                onPressed: () =>
+                                                    besinSec(yemek),
+                                                width: 60,
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
-                      ),
-                    ),
-                  );
-                },
-              ),
             ),
             // Seçili besinler paneli
             _buildSelectedFoodsPanel(),
@@ -922,8 +1008,8 @@ class _BesinSayfasiState extends State<BesinSayfasi> with SingleTickerProviderSt
         child: FloatingActionButton(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          child: Icon(Icons.refresh, color: Colors.white),
           onPressed: yemekleriGetir,
+          child: Icon(Icons.refresh, color: Colors.white),
         ),
       ),
     );

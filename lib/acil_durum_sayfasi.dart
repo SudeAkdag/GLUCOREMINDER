@@ -15,37 +15,36 @@ class AcilDurumSayfasi extends StatefulWidget {
   const AcilDurumSayfasi({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _AcilDurumSayfasiState createState() => _AcilDurumSayfasiState();
 }
 
 class _AcilDurumSayfasiState extends State<AcilDurumSayfasi> {
   final Color primaryColor = const Color(0xFF76C7C0);
-final Color bgColor = const Color(0xFFFFF8E1); // Krem rengi
+  final Color bgColor = const Color(0xFFFFF8E1); // Krem rengi
 
+  final List<Map<String, Color>> renkListesi = [
+    {
+      'bgColor': Colors.blue.shade100,
+      'textColor': Colors.blue.shade800,
+    },
+    {
+      'bgColor': Colors.orange.shade100,
+      'textColor': Colors.orange.shade800,
+    },
+    {
+      'bgColor': Colors.green.shade100,
+      'textColor': Colors.green.shade800,
+    },
+    {
+      'bgColor': Colors.purple.shade100,
+      'textColor': Colors.purple.shade800,
+    },
+  ];
 
-final List<Map<String, Color>> renkListesi = [
-  {
-    'bgColor': Colors.blue.shade100,
-    'textColor': Colors.blue.shade800,
-  },
-  {
-    'bgColor': Colors.orange.shade100,
-    'textColor': Colors.orange.shade800,
-  },
-  {
-    'bgColor': Colors.green.shade100,
-    'textColor': Colors.green.shade800,
-  },
-  {
-    'bgColor': Colors.purple.shade100,
-    'textColor': Colors.purple.shade800,
-  },
-];
-
-
-Map<String, dynamic> rastgeleRenk() {
-  return renkListesi[Random().nextInt(renkListesi.length)];
-}
+  Map<String, dynamic> rastgeleRenk() {
+    return renkListesi[Random().nextInt(renkListesi.length)];
+  }
 
   void kisiEkle() {
     String ad = '';
@@ -57,8 +56,10 @@ Map<String, dynamic> rastgeleRenk() {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text("Acil Durum Kişisi", style: TextStyle(color: primaryColor)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title:
+              Text("Acil Durum Kişisi", style: TextStyle(color: primaryColor)),
           content: SingleChildScrollView(
             child: Column(
               children: [
@@ -119,6 +120,7 @@ Map<String, dynamic> rastgeleRenk() {
                     "telefon": telefon,
                   });
                 }
+                // ignore: use_build_context_synchronously
                 Navigator.pop(context);
               },
             ),
@@ -137,7 +139,8 @@ Map<String, dynamic> rastgeleRenk() {
 
   void kisiSecenekleri(BuildContext context, Map<String, dynamic> kisi) {
     showModalBottomSheet(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       context: context,
       builder: (_) {
         return SafeArea(
@@ -157,10 +160,12 @@ Map<String, dynamic> rastgeleRenk() {
                     if (await canLaunchUrl(telUrl)) {
                       await launchUrl(telUrl);
                     } else {
+                      // ignore: use_build_context_synchronously
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Arama başlatılamadı')),
                       );
                     }
+                    // ignore: use_build_context_synchronously
                     Navigator.pop(context);
                   },
                 ),
@@ -175,6 +180,7 @@ Map<String, dynamic> rastgeleRenk() {
                     if (await canLaunchUrl(smsUrl)) {
                       await launchUrl(smsUrl);
                     }
+                    // ignore: use_build_context_synchronously
                     Navigator.pop(context);
                   },
                 ),
@@ -191,51 +197,50 @@ Map<String, dynamic> rastgeleRenk() {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: PreferredSize(
-  preferredSize: Size.fromHeight(80),
-  child: Container(
-    padding: EdgeInsets.only(top: 30, left: 16, right: 16, bottom: 12),
-    color: bgColor, // Sadece renk veriyoruz, border yok
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ProfilSayfasi()),
-            );
-          },
+        preferredSize: Size.fromHeight(80),
+        child: Container(
+          padding: EdgeInsets.only(top: 30, left: 16, right: 16, bottom: 12),
+          color: bgColor, // Sadece renk veriyoruz, border yok
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Icon(Icons.person, color: Colors.teal),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ProfilSayfasi()),
+                  );
+                },
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.person, color: Colors.teal),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      "Kullanıcı",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              SizedBox(width: 8),
               Text(
-                "Kullanıcı",
+                "Acil Durum Sayfası",
                 style: TextStyle(
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 18,
                 ),
               ),
             ],
           ),
         ),
-        Text(
-          "Acil Durum Sayfası",
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-      ],
-    ),
-  ),
-),
-
+      ),
       body: StreamBuilder(
         stream:
             FirebaseFirestore.instance.collection('acil_kisiler').snapshots(),
@@ -253,7 +258,6 @@ Map<String, dynamic> rastgeleRenk() {
           }
 
           return ListView.builder(
-            
             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
@@ -261,40 +265,40 @@ Map<String, dynamic> rastgeleRenk() {
               final renk = renkListesi[index % renkListesi.length];
 
               var veri = kisi.data() as Map<String, dynamic>;
-              
 
-return Card(
-  color: renk['bgColor'],
-  elevation: 6,
-  margin: EdgeInsets.symmetric(vertical: 10),
-  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-  child: ListTile(
-    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-    leading: CircleAvatar(
-      backgroundColor: renk['textColor'],
-      radius: 26,
-      child: Icon(Icons.person, color: Colors.white),
-    ),
-    title: Text(
-      "${veri['ad']} ${veri['soyad']}",
-      style: TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: 18,
-        color: renk['textColor'],
-      ),
-    ),
-    subtitle: Text(
-      "${veri['yakinlik']} • ${veri['telefon']}",
-      style: TextStyle(color: Colors.grey[800]),
-    ),
-    trailing: IconButton(
-      icon: Icon(Icons.delete, color: Colors.red),
-      onPressed: () => kisiSil(kisi.id),
-    ),
-    onTap: () => kisiSecenekleri(context, veri),
-  ),
-);
-
+              return Card(
+                color: renk['bgColor'],
+                elevation: 6,
+                margin: EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                child: ListTile(
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  leading: CircleAvatar(
+                    backgroundColor: renk['textColor'],
+                    radius: 26,
+                    child: Icon(Icons.person, color: Colors.white),
+                  ),
+                  title: Text(
+                    "${veri['ad']} ${veri['soyad']}",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: renk['textColor'],
+                    ),
+                  ),
+                  subtitle: Text(
+                    "${veri['yakinlik']} • ${veri['telefon']}",
+                    style: TextStyle(color: Colors.grey[800]),
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => kisiSil(kisi.id),
+                  ),
+                  onTap: () => kisiSecenekleri(context, veri),
+                ),
+              );
             },
           );
         },

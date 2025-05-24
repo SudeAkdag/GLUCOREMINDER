@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously, deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gluco_reminder/profil.dart';
@@ -45,9 +47,8 @@ class Randevu {
           final int minute = int.parse(saatParts[1]);
           fullDateTime =
               DateTime(tarih.year, tarih.month, tarih.day, hour, minute);
-        } catch (e) {
-          print('Saat ayrıştırma hatası: $e');
-        }
+          // ignore: empty_catches
+        } catch (e) {}
       }
     }
 
@@ -68,6 +69,8 @@ class Randevu {
 enum RandevuFiltre { gecmis, yaklasan }
 
 class RandevuSayfasi extends StatefulWidget {
+  const RandevuSayfasi({super.key});
+
   @override
   _RandevuSayfasiState createState() => _RandevuSayfasiState();
 }
@@ -142,6 +145,8 @@ class _RandevuSayfasiState extends State<RandevuSayfasi>
           .doc(docId)
           .delete();
 
+      // ignore: duplicate_ignore
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Randevu başarıyla silindi'),
@@ -266,10 +271,10 @@ class _RandevuSayfasiState extends State<RandevuSayfasi>
                 SizedBox(height: 8),
                 ElevatedButton(
                   onPressed: () => setState(() {}),
-                  child: Text('Yenile'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF4FD2D2),
                   ),
+                  child: Text('Yenile'),
                 ),
               ],
             ),
@@ -487,7 +492,7 @@ class _RandevuSayfasiState extends State<RandevuSayfasi>
   }
 
   void _showRandevuDetay(BuildContext context, Randevu randevu) {
-    final isGecmis = randevu.fullDateTime.isBefore(DateTime.now());
+    randevu.fullDateTime.isBefore(DateTime.now());
 
     showModalBottomSheet(
       context: context,
@@ -618,82 +623,6 @@ class _RandevuSayfasiState extends State<RandevuSayfasi>
                 ),
               ),
             ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailSection({
-    required String title,
-    required IconData icon,
-    required List<DetailItem> items,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: Color(0xFF4FD2D2), size: 20),
-            SizedBox(width: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 12),
-        Container(
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: items.map((item) {
-              if (item.isNote) {
-                return Text(
-                  item.content,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black87,
-                    height: 1.5,
-                  ),
-                );
-              }
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${item.title}: ',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        item.content,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
           ),
         ),
       ],
