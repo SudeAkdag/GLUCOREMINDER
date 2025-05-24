@@ -1054,55 +1054,35 @@ class _SleepFormPopupState extends State<SleepFormPopup> {
     }
   }
 
-  Future<void> _uykuVerisiniKaydet() async {
-    if (bedTime != null &&
-        wakeTime != null &&
-        hedefSaatController.text.isNotEmpty) {
-      try {
-        final now = DateTime.now();
-        final bugunBaslangic = DateTime(now.year, now.month, now.day);
-        final bugunBitis = bugunBaslangic.add(Duration(days: 1));
+ Future<void> _uykuVerisiniKaydet() async {
+  if (bedTime != null &&
+      wakeTime != null &&
+      hedefSaatController.text.isNotEmpty) {
+    try {
+      await FirebaseFirestore.instance.collection('uyku_verileri').add({
+        'yatma_saati': bedTime!.format(context),
+        'uyanma_saati': wakeTime!.format(context),
+        'mood': mood,
+        'hedef_saat': hedefSaatController.text,
+        'timestamp': Timestamp.now(),
+      });
 
-        final querySnapshot = await FirebaseFirestore.instance
-            .collection('uyku_verileri')
-            .where('timestamp',
-                isGreaterThanOrEqualTo: Timestamp.fromDate(bugunBaslangic))
-            .where('timestamp', isLessThan: Timestamp.fromDate(bugunBitis))
-            .get();
-
-        if (!mounted) return;
-
-        if (querySnapshot.docs.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Bugün için zaten bir veri eklediniz.")),
-          );
-          Navigator.pop(context); // ✨ Form ekranını kapat
-          return;
-        }
-
-        await FirebaseFirestore.instance.collection('uyku_verileri').add({
-          'yatma_saati': bedTime!.format(context),
-          'uyanma_saati': wakeTime!.format(context),
-          'mood': mood,
-          'hedef_saat': hedefSaatController.text,
-          'timestamp': Timestamp.now(),
-        });
-
-        if (!mounted) return;
-        Navigator.pop(context);
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Hata oluştu: $e")),
-        );
-      }
-    } else {
+      if (!mounted) return;
+      Navigator.pop(context);
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Lütfen tüm alanları doldurun")),
+        SnackBar(content: Text("Hata oluştu: $e")),
       );
     }
+  } else {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Lütfen tüm alanları doldurun")),
+    );
   }
+}
+
 
   TimeOfDay? bedTime;
   TimeOfDay? wakeTime;
