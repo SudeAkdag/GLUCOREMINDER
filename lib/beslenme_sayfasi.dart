@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.teal,
         brightness: Brightness.light,
         fontFamily: 'Roboto',
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 4,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.teal,
         brightness: Brightness.dark,
         fontFamily: 'Roboto',
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 4,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
